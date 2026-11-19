@@ -1,0 +1,28 @@
+{
+"howto": [
+"Dates: each day shows the civil (new-style) date and weekday, then the old-style (Julian) date, which is 13 days earlier. The Macedonian Orthodox Church keeps the Julian calendar. The source gives only the old-style day number; the month name (and, for 1–13 January, the year 2025) was supplied from the 13-day offset.",
+"Year check: the monthly pages on mpc.org.mk were checked against the 2026 civil calendar – every weekday matches 2026, the old-style offset is 13 days throughout, and Pascha falls on 12 April 2026, as it should.",
+"Saints and feasts are listed in the order given on mpc.org.mk: English first, the original Macedonian in parentheses. Square brackets [ ] mark short clarifications added in translation.",
+"Red: commemorations printed in red on the source (red-letter days). On the source every commemoration on a Sunday is printed red; on weekdays red marks the major feasts. Day headings are red when the day has a red commemoration. ★ marks Pascha and the Twelve Great Feasts (added by the compiler; the source has no such sign).",
+"Blue bold: commemorations printed in bold blue on the source (mostly saints particular to the Macedonian Church). The “+” sign in the lists of saints is reproduced exactly where the source places it; the source gives no legend for it.",
+"Fasting: the source marks fast days with “Пост” only; it does not specify the kind of fast (oil, wine, fish, strict) and does not mark ordinary Wednesdays and Fridays. The name of the fasting period (e.g. Great Lent, Apostles’ Fast, Dormition Fast) was added by the compiler from the 2026 dates. Unmarked days are shown as “not marked on source”. Ask your parish priest for the detailed rule.",
+"Sunday readings: mpc.org.mk lists Apostle and Gospel readings only for Sundays. These are given exactly as listed. When a Sunday has a feast’s readings as well as the Sunday readings, both sets are given, Apostles first, in the source’s order.",
+"Weekday readings (lectionary labelling): mpc.org.mk does not list readings for weekdays, so every weekday – including weekday feasts such as Christmas, Theophany, the Annunciation, Holy Week, the Ascension and the Transfiguration – has the readings of the standard Orthodox lectionary for 2026, taken from the calendar published by holytrinityorthodox.com (Russian Orthodox Church Outside of Russia), which follows the same Julian calendar. Every such reading carries the small italic line “Reading from the standard Orthodox lectionary; not listed on mpc.org.mk” (in the Macedonian part: “Читање од вообичаениот православен лекционар; не е наведено на mpc.org.mk”). Readings without that line are exactly those listed on mpc.org.mk.",
+"What the weekday readings include: the Apostle and Gospel of the Liturgy; on Great Lent weekdays, when no Apostle or Gospel is read, the Old Testament readings of the Sixth Hour and of Vespers (marked “Old Testament”, with the service in brackets); on feasts, the readings of the feast (a short note says when the ordinary daily readings are left out); and on Holy Thursday and Holy Friday the Gospel made up of several passages, as appointed. Matins Gospels, the Twelve Passion Gospels and other additional service readings are not included. Local parish practice may differ – ask your priest.",
+"Verse ranges: where the lectionary source gives a slightly different verse range from the one printed, because of a different verse division in the Macedonian Bible, the source’s range is shown in brackets in the italic line.",
+"Scripture text: the Macedonian text is taken word for word from the Macedonian Bible on m-p-c.org, printed without verse numbers and with the source’s punctuation and signs (including any “+”) kept as found; the English is a faithful translation of that Macedonian text, printed as prose.",
+"Reused passages: some passages are read on more than one day of the year. The full text is printed again every time, so each day can be read on its own; the commentary is adapted to the saints or season of each day.",
+"Commentary and notes are written for this calendar in the spirit of Orthodox patristic teaching, in simple language for young people. Church Fathers are paraphrased, not quoted.",
+"After the readings, “Saints of the Day — Lives and Lessons” gives a short life of the day’s saints (or the story of the feast), what they taught or how they witnessed to Christ, and what we should remember.",
+"Each day ends with “Превод на македонски / Macedonian translation”, containing the whole day in Macedonian, including the saints’ lives (“Светители на денот — житија и поуки”)."
+],
+"cover": [
+"Macedonian Orthodox Church Calendar",
+"January – December 2026 · Full Year",
+"Saints and feasts · fasting · daily Scripture readings with commentary",
+"English with Macedonian translation",
+"Црковен календар на Македонската Православна Црква – Охридска Архиепископија",
+"јануари – декември 2026 · цела година · секојдневни читања од Светото Писмо · на англиски јазик со македонски превод",
+"Calendar source: mpc.org.mk – http://www.mpc.org.mk/kalendar/mesec.asp?mo=… (mo=1,2,3,4,5,6,7,8,9,10,11,12) and the day pages Kalendar.asp?d=MMDD\nWeekday readings: standard Orthodox lectionary as published by holytrinityorthodox.com (Russian Orthodox Church Outside of Russia)\nScripture source (Macedonian text): m-p-c.org – Библија (https://www.m-p-c.org/?page_id=31)\nRetrieved 31 October 2026"
+]
+}
