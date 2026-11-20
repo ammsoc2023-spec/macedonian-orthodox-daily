@@ -116,9 +116,9 @@ mark{background:var(--hl);color:inherit}
 .credit{text-align:center;opacity:.8;font-style:italic;margin-top:10px}
 
 /* prayers view */
-.pvnav{display:flex;align-items:center;gap:10px;padding:2px 10px 8px}
+.pvnav{display:flex;align-items:center;gap:8px;padding:0;flex:1;min-width:0}
 .pvnav[hidden],main[hidden]{display:none}
-#pvTitle{flex:1;text-align:center;font-weight:700;font-size:17px;padding-right:70px}
+#pvTitle{flex:1;text-align:center;font-weight:700;font-size:17px;min-width:0}
 #btnPrayers.on{background:#fff;color:var(--accent);font-weight:700}
 body.pv .datenav,body.pv #foot{display:none}
 .bar{flex-wrap:nowrap}
@@ -147,11 +147,11 @@ figure.dayicon .ic-g{display:block;margin-top:.35em;font-style:italic;font-size:
 figure.dayicon .ic-src{display:block;margin-top:.45em;font-family:var(--sans);font-size:.68em;color:var(--muted)}
 figure.dayicon .ic-src a{color:var(--muted)}
 /* ---------- month view (home screen) ---------- */
-.dvnav{display:flex;align-items:center;padding:0 10px 2px}
-.dvnav .pill{font-size:14px;padding:3px 12px}
-.mvnav{display:flex;align-items:center;padding:0 4px 8px}
+.dvnav{display:flex;align-items:center;padding:0;flex:0 0 auto;min-width:0}
+.dvnav .pill{font-size:14px;padding:3px 10px;white-space:nowrap}
+.mvnav{display:flex;align-items:center;padding:0;flex:1;min-width:0}
 .mvnav[hidden]{display:none}
-.mvTitle{flex:1;text-align:center;line-height:1.25}
+.mvTitle{flex:1;text-align:center;line-height:1.25;min-width:0}
 #mvTitle{font-weight:700;font-size:20px;font-family:var(--serif)}
 #mvSub{font-size:12px;opacity:.85}
 body.mv .datenav,body.mv .dvnav,body.pv .dvnav,body.pv .mvnav{display:none}
@@ -184,14 +184,38 @@ body.mv .datenav,body.mv .dvnav,body.pv .dvnav,body.pv .mvnav{display:none}
 #month .legend{font-size:.72em;color:var(--muted);text-align:center;margin:.6em 0 0}
 @media (max-width:360px){.mgrid{gap:3px}.mgrid button.day{min-height:58px}.mgrid .nm{font-size:8px}.mgrid .dn{font-size:15px}}
 
-/* ---------- Bible tab (in the first header row, after Prayers) and Bible view ---------- */
+/* ---------- Second header row: month/day/prayers nav + Bible tab at the right end ---------- */
+.row2{display:flex;align-items:center;flex-wrap:nowrap;gap:4px;padding:0 6px 6px;min-width:0}
+.row2>nav{min-width:0}
+.row2>nav[hidden]{display:none}
+#btnBible{flex:0 0 auto;margin-left:auto;white-space:nowrap}
 #btnBible.on{background:#fff;color:var(--accent);font-weight:700}
-.bvnav{display:flex;align-items:center;gap:10px;padding:2px 10px 8px}
+.datenav{flex:1;padding:0;min-width:0}
+#navDate{white-space:nowrap}
+#btnMonth .yr{font-weight:600}
+.bvnav{display:flex;align-items:center;gap:8px;padding:0;flex:1;min-width:0}
 .bvnav[hidden]{display:none}
-#bvTitle{flex:1;text-align:center;font-weight:700;font-size:17px}
+#bvTitle{flex:1;text-align:center;font-weight:700;font-size:17px;min-width:0}
 #bibleExt{color:#fff;font-size:13px;text-decoration:underline;white-space:nowrap;opacity:.95}
 #bibleExt:hover,#bibleExt:focus{opacity:1}
 body.bv .datenav,body.bv .dvnav,body.bv .mvnav,body.bv .pvnav,body.bv #foot{display:none}
+/* Bible view already has its own back/title/open-in-browser row; keep the pill out of the way. */
+body.bv #btnBible{display:none}
+body:not(.mv):not(.pv):not(.bv) .datenav .arrow{min-width:40px;padding:0 8px 4px}
+@media (max-width:430px){
+  .row2{gap:2px;padding:0 4px 6px}
+  #btnBible{padding:4px 8px;font-size:13px}
+  .dvnav .pill{font-size:12px;padding:3px 7px}
+  #btnMonth .yr{display:none}
+  body:not(.mv):not(.pv):not(.bv) .datenav .arrow{min-width:32px;padding:0 4px 2px;font-size:28px}
+  body:not(.mv):not(.pv):not(.bv) #navDate{font-size:13px}
+  body:not(.mv):not(.pv):not(.bv) #navOld{font-size:11px}
+  .mvnav .arrow{min-width:40px;padding:0 8px 4px}
+}
+@media (max-width:360px){
+  .row2{gap:2px;padding:0 3px 6px}
+  #btnBible{padding:4px 7px;font-size:13px}
+}
 body.bv{display:flex;flex-direction:column;min-height:100dvh;height:100dvh;overflow:hidden}
 body.bv header#top{flex:none}
 body.bv #bible{display:flex;flex-direction:column;flex:1;width:100%;max-width:none;margin:0;padding:0;min-height:0}

@@ -24,35 +24,37 @@
   <div class="bar">
     <button id="btnToday" class="pill" type="button">Today</button>
     <button id="btnPrayers" class="pill" type="button">Prayers</button>
-    <button id="btnBible" class="pill" type="button">Bible</button>
     <div class="seg" id="langSeg" role="group" aria-label="Language">
       <button type="button" data-lang="en">EN</button><button type="button" data-lang="mk">МК</button><button type="button" data-lang="both">EN+МК</button>
     </div>
     <button id="btnSearch" class="icon" type="button" aria-label="Search saints">&#x1F50D;&#xFE0E;</button>
     <button id="btnMenu" class="icon" type="button" aria-label="Settings">&#9881;&#xFE0E;</button>
   </div>
-  <nav class="dvnav">
-    <button id="btnMonth" class="pill" type="button" aria-label="Back to month view">&#8249; <span id="btnMonthLbl">Month</span></button>
-  </nav>
-  <nav class="mvnav" hidden>
-    <button id="mvPrev" class="arrow" type="button" aria-label="Previous month">&#8249;</button>
-    <div class="mvTitle"><div id="mvTitle"></div><div id="mvSub"></div></div>
-    <button id="mvNext" class="arrow" type="button" aria-label="Next month">&#8250;</button>
-  </nav>
-  <nav class="datenav">
-    <button id="btnPrev" class="arrow" type="button" aria-label="Previous day">&#8249;</button>
-    <button id="btnCal" class="datebtn" type="button" aria-label="Back to month view"><span id="navDate"></span><span id="navOld"></span></button>
-    <button id="btnNext" class="arrow" type="button" aria-label="Next day">&#8250;</button>
-  </nav>
-  <nav class="pvnav" hidden>
-    <button id="btnBack" class="pill" type="button">&#8249; Calendar</button>
-    <span id="pvTitle">Prayers</span>
-  </nav>
-  <nav class="bvnav" hidden>
-    <button id="btnBibleBack" class="pill" type="button">&#8249; Calendar</button>
-    <span id="bvTitle">Bible</span>
-    <a id="bibleExt" href="https://www.orthodoxbibleonline.com/" target="_blank" rel="noopener noreferrer">Open in browser</a>
-  </nav>
+  <div class="row2">
+    <nav class="dvnav">
+      <button id="btnMonth" class="pill" type="button" aria-label="Back to month view">&#8249; <span id="btnMonthLbl">Month</span></button>
+    </nav>
+    <nav class="mvnav" hidden>
+      <button id="mvPrev" class="arrow" type="button" aria-label="Previous month">&#8249;</button>
+      <div class="mvTitle"><div id="mvTitle"></div><div id="mvSub"></div></div>
+      <button id="mvNext" class="arrow" type="button" aria-label="Next month">&#8250;</button>
+    </nav>
+    <nav class="datenav">
+      <button id="btnPrev" class="arrow" type="button" aria-label="Previous day">&#8249;</button>
+      <button id="btnCal" class="datebtn" type="button" aria-label="Back to month view"><span id="navDate"></span><span id="navOld"></span></button>
+      <button id="btnNext" class="arrow" type="button" aria-label="Next day">&#8250;</button>
+    </nav>
+    <nav class="pvnav" hidden>
+      <button id="btnBack" class="pill" type="button">&#8249; Calendar</button>
+      <span id="pvTitle">Prayers</span>
+    </nav>
+    <nav class="bvnav" hidden>
+      <button id="btnBibleBack" class="pill" type="button">&#8249; Calendar</button>
+      <span id="bvTitle">Bible</span>
+      <a id="bibleExt" href="https://www.orthodoxbibleonline.com/" target="_blank" rel="noopener noreferrer">Open in browser</a>
+    </nav>
+    <button id="btnBible" class="pill" type="button">Bible</button>
+  </div>
 </header>
 <main id="day" aria-live="polite"><p class="loading">Loading…</p></main>
 <main id="month" hidden></main>
