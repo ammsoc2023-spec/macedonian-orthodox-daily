@@ -164,7 +164,7 @@ function updateNav(){
   const o=new Date(Date.UTC(2026,M,D-13)); const oy=o.getUTCFullYear()!==2026?' '+o.getUTCFullYear():'';
   $('#navOld').textContent=lang==='mk'?`по стар стил: ${o.getUTCDate()} ${MON_MK[o.getUTCMonth()]}${oy}`:`Old style: ${o.getUTCDate()} ${MON_EN[o.getUTCMonth()]}${oy}`;
   $('#btnPrev').disabled=cur<=FIRST; $('#btnNext').disabled=cur>=LAST;
-  $('#btnMonthLbl').innerHTML=esc(monthName(M+1,lang==='mk'))+' <span class="yr">2026</span>';
+  $('#btnMonthLbl').textContent=monthName(M+1,lang==='mk')+' 2026';
   $('#btnToday').classList.toggle('on',cur===clamp(sydneyToday()));
 }
 const step=n=>{const t=addDays(cur,n); if(t>=FIRST&&t<=LAST) show(t)};

@@ -118,14 +118,14 @@ mark{background:var(--hl);color:inherit}
 /* prayers view */
 .pvnav{display:flex;align-items:center;gap:8px;padding:0;flex:1;min-width:0}
 .pvnav[hidden],main[hidden]{display:none}
-#pvTitle{flex:1;text-align:center;font-weight:700;font-size:17px;min-width:0}
+#pvTitle{flex:1;text-align:center;font-weight:700;font-size:17px;min-width:0;padding-right:70px}
 #btnPrayers.on{background:#fff;color:var(--accent);font-weight:700}
 body.pv .datenav,body.pv #foot{display:none}
 .bar{flex-wrap:nowrap}
 .bar .pill{white-space:nowrap;flex-shrink:0}
 .bar .seg,.bar .icon{flex-shrink:0}
 @media (max-width:430px){.bar{gap:4px;padding:8px 5px 4px}.bar .pill{padding:4px 6px;font-size:14px}.bar .seg button{padding:4px 5px;font-size:13px}.bar .icon{padding:4px 2px;font-size:18px}}
-@media (max-width:360px){.bar{gap:3px;padding:8px 4px 4px}.bar .pill{padding:4px 6px;font-size:13px}.bar .seg button{padding:4px 4px;font-size:12px}.bar .icon{padding:3px 2px;font-size:18px}}
+@media (max-width:360px){.bar{gap:3px;padding:8px 3px 4px}.bar .pill{padding:4px 5px;font-size:13px}.bar .seg button{padding:4px 4px;font-size:12px}.bar .icon{padding:3px 2px;font-size:18px}}
 details.psec>summary{font-family:var(--serif);font-size:1.08em}
 .psecsub{color:var(--muted);font-style:italic;font-size:.85em;margin:0 0 .6em}
 .prayer{margin:.4em 0 1.1em;padding-bottom:.6em;border-bottom:1px dotted var(--line)}
@@ -184,37 +184,32 @@ body.mv .datenav,body.mv .dvnav,body.pv .dvnav,body.pv .mvnav{display:none}
 #month .legend{font-size:.72em;color:var(--muted);text-align:center;margin:.6em 0 0}
 @media (max-width:360px){.mgrid{gap:3px}.mgrid button.day{min-height:58px}.mgrid .nm{font-size:8px}.mgrid .dn{font-size:15px}}
 
-/* ---------- Second header row: month/day/prayers nav + Bible tab at the right end ---------- */
-.row2{display:flex;align-items:center;flex-wrap:nowrap;gap:4px;padding:0 6px 6px;min-width:0}
+/* ---------- Bible tab at the far right of the first header row; row 2 is nav only ---------- */
+#btnBible.on{background:#fff;color:var(--accent);font-weight:700}
+.row2{display:flex;align-items:center;flex-wrap:nowrap;gap:4px;padding:0 4px 6px;min-width:0}
 .row2>nav{min-width:0}
 .row2>nav[hidden]{display:none}
-#btnBible{flex:0 0 auto;margin-left:auto;white-space:nowrap}
-#btnBible.on{background:#fff;color:var(--accent);font-weight:700}
 .datenav{flex:1;padding:0;min-width:0}
 #navDate{white-space:nowrap}
-#btnMonth .yr{font-weight:600}
 .bvnav{display:flex;align-items:center;gap:8px;padding:0;flex:1;min-width:0}
 .bvnav[hidden]{display:none}
 #bvTitle{flex:1;text-align:center;font-weight:700;font-size:17px;min-width:0}
 #bibleExt{color:#fff;font-size:13px;text-decoration:underline;white-space:nowrap;opacity:.95}
 #bibleExt:hover,#bibleExt:focus{opacity:1}
 body.bv .datenav,body.bv .dvnav,body.bv .mvnav,body.bv .pvnav,body.bv #foot{display:none}
-/* Bible view already has its own back/title/open-in-browser row; keep the pill out of the way. */
-body.bv #btnBible{display:none}
-body:not(.mv):not(.pv):not(.bv) .datenav .arrow{min-width:40px;padding:0 8px 4px}
+body:not(.mv):not(.pv):not(.bv) .datenav .arrow{min-width:44px;padding:0 10px 4px}
 @media (max-width:430px){
   .row2{gap:2px;padding:0 4px 6px}
-  #btnBible{padding:4px 8px;font-size:13px}
-  .dvnav .pill{font-size:12px;padding:3px 7px}
-  #btnMonth .yr{display:none}
-  body:not(.mv):not(.pv):not(.bv) .datenav .arrow{min-width:32px;padding:0 4px 2px;font-size:28px}
-  body:not(.mv):not(.pv):not(.bv) #navDate{font-size:13px}
+  .dvnav .pill{font-size:13px;padding:3px 8px}
+  body:not(.mv):not(.pv):not(.bv) .datenav .arrow{min-width:40px;padding:0 6px 2px;font-size:30px}
+  body:not(.mv):not(.pv):not(.bv) #navDate{font-size:14px}
   body:not(.mv):not(.pv):not(.bv) #navOld{font-size:11px}
-  .mvnav .arrow{min-width:40px;padding:0 8px 4px}
 }
 @media (max-width:360px){
   .row2{gap:2px;padding:0 3px 6px}
-  #btnBible{padding:4px 7px;font-size:13px}
+  .dvnav .pill{font-size:12px;padding:3px 7px}
+  body:not(.mv):not(.pv):not(.bv) .datenav .arrow{min-width:36px;padding:0 4px 2px;font-size:30px}
+  body:not(.mv):not(.pv):not(.bv) #navDate{font-size:13px}
 }
 body.bv{display:flex;flex-direction:column;min-height:100dvh;height:100dvh;overflow:hidden}
 body.bv header#top{flex:none}
