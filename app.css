@@ -87,7 +87,9 @@ footer{max-width:46rem;margin:0 auto;padding:0 16px 120px;color:var(--muted);fon
 #results .res .d{font-size:12px;color:var(--muted)}
 #results .cnt{font-size:12px;color:var(--muted);padding:4px}
 mark{background:var(--hl);color:inherit}
-.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px}
+.row{display:flex;justify-content:space-between;align-items:center;margin:12px 0;gap:8px;min-width:0;max-width:100%}
+.row>span:first-child{flex:1 1 0;min-width:0}
+.sheet .seg{flex:0 0 auto}
 .small{font-size:12px;color:var(--muted)}
 .about{font-size:14px}
 .about li{margin:.4em 0}
@@ -124,8 +126,9 @@ body.pv .datenav,body.pv #foot{display:none}
 .bar{flex-wrap:nowrap}
 .bar .pill{white-space:nowrap;flex-shrink:0}
 .bar .seg,.bar .icon{flex-shrink:0}
-@media (max-width:430px){.bar{gap:4px;padding:8px 5px 4px}.bar .pill{padding:4px 6px;font-size:14px}.bar .seg button{padding:4px 5px;font-size:13px}.bar .icon{padding:4px 2px;font-size:18px}}
-@media (max-width:360px){.bar{gap:3px;padding:8px 3px 4px}.bar .pill{padding:4px 5px;font-size:13px}.bar .seg button{padding:4px 4px;font-size:12px}.bar .icon{padding:3px 2px;font-size:18px}}
+.biblePair{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;margin-left:0}
+@media (max-width:430px){.bar{gap:2px;padding:8px 2px 4px}.bar .pill{padding:3px 4px;font-size:12px}.bar .seg button{padding:3px 3px;font-size:11px}.bar .icon{padding:2px 1px;font-size:16px}.biblePair{gap:2px}.biblePair .pill{padding:3px 4px;font-size:12px}}
+@media (max-width:360px){.bar{gap:2px;padding:8px 1px 4px}.bar .pill{padding:3px 3px;font-size:12px}.bar .seg button{padding:3px 2px;font-size:11px}.bar .icon{padding:2px 1px;font-size:16px}.biblePair{gap:1px}.biblePair .pill{padding:3px 3px;font-size:11px}}
 details.psec>summary{font-family:var(--serif);font-size:1.08em}
 .psecsub{color:var(--muted);font-style:italic;font-size:.85em;margin:0 0 .6em}
 .prayer{margin:.4em 0 1.1em;padding-bottom:.6em;border-bottom:1px dotted var(--line)}
@@ -184,8 +187,8 @@ body.mv .datenav,body.mv .dvnav,body.pv .dvnav,body.pv .mvnav{display:none}
 #month .legend{font-size:.72em;color:var(--muted);text-align:center;margin:.6em 0 0}
 @media (max-width:360px){.mgrid{gap:3px}.mgrid button.day{min-height:58px}.mgrid .nm{font-size:8px}.mgrid .dn{font-size:15px}}
 
-/* ---------- Bible tab at the far right of the first header row; row 2 is nav only ---------- */
-#btnBible.on{background:#fff;color:var(--accent);font-weight:700}
+/* ---------- Bible tabs at the far right of the first header row; row 2 is nav only ---------- */
+#btnBible.on,#btnBiblija.on{background:#fff;color:var(--accent);font-weight:700}
 .row2{display:flex;align-items:center;flex-wrap:nowrap;gap:4px;padding:0 4px 6px;min-width:0}
 .row2>nav{min-width:0}
 .row2>nav[hidden]{display:none}
@@ -215,6 +218,7 @@ body.bv{display:flex;flex-direction:column;min-height:100dvh;height:100dvh;overf
 body.bv header#top{flex:none}
 body.bv #bible{display:flex;flex-direction:column;flex:1;width:100%;max-width:none;margin:0;padding:0;min-height:0}
 #bibleFrame{flex:1;width:100%;border:0;min-height:0;background:var(--bg)}
-#bibleOffline{padding:2.2em 1.3em 2em;text-align:center;color:var(--fg);max-width:28rem;margin:0 auto}
-#bibleOffline p{margin:.6em 0;line-height:1.45}
-#bibleOffline[hidden],#bibleFrame[hidden]{display:none}
+#bibleOffline,#bibleFallback{padding:2.2em 1.3em 2em;text-align:center;color:var(--fg);max-width:28rem;margin:0 auto}
+#bibleOffline p,#bibleFallback p{margin:.6em 0;line-height:1.45}
+#bibleFallback a{color:var(--accent);font-weight:700}
+#bibleOffline[hidden],#bibleFallback[hidden],#bibleFrame[hidden]{display:none}

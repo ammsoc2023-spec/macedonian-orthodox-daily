@@ -1,4 +1,4 @@
-/* MPC Church Calendar 2026 – offline PWA. No tracking. The Bible tab loads orthodoxbibleonline.com in an iframe when opened (needs internet). */
+/* MPC Church Calendar 2026 – offline PWA. No tracking. Bible tabs load orthodoxbibleonline.com and biblija.mk in iframes when opened (needs internet; text is not copied or cached). */
 'use strict';
 (function(){
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
@@ -18,7 +18,7 @@ const T={
      offline:'Offline ready: all 365 days are stored on this device.',offlineNo:'Offline storage not available in this browser.',
      listen:'Read aloud',scopeAll:'Whole day',scopeSaints:'Saints only',scopeRead:'Readings only',scopeCom:'Commentary only',
      lEn:'English',lMk:'Macedonian',lBoth:'English, then Macedonian',voice:'Voice',reading:'Reading',paused:'Paused',done:'Finished',
-     prayers:'Prayers',back:'Calendar',tapday:'Tap a day to open it.',feasts:'Feasts and red-letter days this month',mlegend:'Red = Sunday / red-letter day · ★ = Great Feast · purple underline = fast day · small number = old-style date · gold ring = today',pAll:'All prayers',pSec:{morning:'Morning prayers',table:'Prayers at table',day:'Prayers during the day',evening:'Evening prayers'},noprayers:'Could not load the prayers.',bible:'Bible',bibleOpen:'Open in browser',bibleOff:'The Bible needs an internet connection. You can still use the calendar and prayers offline.'},
+     prayers:'Prayers',back:'Calendar',tapday:'Tap a day to open it.',feasts:'Feasts and red-letter days this month',mlegend:'Red = Sunday / red-letter day · ★ = Great Feast · purple underline = fast day · small number = old-style date · gold ring = today',pAll:'All prayers',pSec:{morning:'Morning prayers',table:'Prayers at table',day:'Prayers during the day',evening:'Evening prayers'},noprayers:'Could not load the prayers.',bible:'Bible',biblija:'Biblija.mk',bibleOpen:'Open in browser',bibleOff:'The Bible needs an internet connection. You can still use the calendar and prayers offline.',bibleFail:'This page could not be shown here. You can open it in your browser.'},
  mk:{today:'Денес',saints:'Светители и празници',fasting:'Пост',readings:'Читања',commentary:'Толкување',notes:'Белешки',
      lives:'Светители на денот — житија и поуки',noread:'За овој ден нема читања.',search:'Пребарај светители (англиски или македонски)',
      close:'Затвори',goto:'Оди на датум',settings:'Поставки',font:'Големина на текст',theme:'Изглед',sections:'Делови',openall:'Отвори ги сите',closeall:'Затвори ги сите',
@@ -28,13 +28,16 @@ const T={
      offline:'Подготвено за офлајн: сите 365 дена се зачувани на уредот.',offlineNo:'Офлајн зачувување не е достапно во овој прелистувач.',
      listen:'Читај гласно',scopeAll:'Цел ден',scopeSaints:'Само светители',scopeRead:'Само читања',scopeCom:'Само толкување',
      lEn:'Англиски',lMk:'Македонски',lBoth:'Англиски, па македонски',voice:'Глас',reading:'Се чита',paused:'Паузирано',done:'Готово',
-     prayers:'Молитви',back:'Календар',tapday:'Допрете на ден за да го отворите.',feasts:'Празници и црвени денови во овој месец',mlegend:'Црвено = недела / црвен ден · ★ = Голем празник · виолетова линија = пост · мал број = датум по стар стил · златна рамка = денес',pAll:'Сите молитви',pSec:{morning:'Утрински молитви',table:'Молитви при трпеза',day:'Молитви преку денот',evening:'Вечерни молитви'},noprayers:'Молитвите не можат да се вчитаат.',bible:'Библија',bibleOpen:'Отвори во прелистувач',bibleOff:'За Библијата е потребна интернет-врска. Календарот и молитвите и понатаму работат офлајн.'}};
+     prayers:'Молитви',back:'Календар',tapday:'Допрете на ден за да го отворите.',feasts:'Празници и црвени денови во овој месец',mlegend:'Црвено = недела / црвен ден · ★ = Голем празник · виолетова линија = пост · мал број = датум по стар стил · златна рамка = денес',pAll:'Сите молитви',pSec:{morning:'Утрински молитви',table:'Молитви при трпеза',day:'Молитви преку денот',evening:'Вечерни молитви'},noprayers:'Молитвите не можат да се вчитаат.',bible:'Библија',biblija:'Библија.mk',bibleOpen:'Отвори во прелистувач',bibleOff:'За Библијата е потребна интернет-врска. Календарот и молитвите и понатаму работат офлајн.',bibleFail:'Страницата не може да се прикаже овде. Можете да ја отворите во прелистувачот.'}};
 let lang=LS.get('lang','en'); if(!['en','mk','both'].includes(lang)) lang='en';
 const ui=()=>T[lang==='mk'?'mk':'en'];
 let cur=null, months={}, index=null, notice='', prayersOpen=false, pvPushed=false, prayersP=null;
 let view='day', mvM=1, dayPushed=false, pvFrom='day';
-let bibleOpen=false, bvPushed=false, bvFrom='day';
-const BIBLE_URL='https://www.orthodoxbibleonline.com/';
+let bibleOpen=false, bibleSrc='bible', bvPushed=false, bvFrom='day', bibleLoadGen=0;
+const BIBLES={
+  bible:{url:'https://www.orthodoxbibleonline.com/',hash:'#bible',titleEn:'Bible',titleMk:'Библија',titleBoth:'Bible · Библија',frameTitle:'Orthodox Bible Online'},
+  biblija:{url:'https://biblija.mk/biblija/',hash:'#biblija',titleEn:'Biblija.mk',titleMk:'Библија.mk',titleBoth:'Biblija.mk · Библија.mk',frameTitle:'Biblija.mk'}
+};
 const vmonth=h=>/^2026-(0[1-9]|1[0-2])$/.test(h)?+h.slice(5,7):0;
 const monthName=(m,mk)=>mk?MON_MK[m-1].replace(/^./,c=>c.toUpperCase()):MON_EN[m-1];
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -83,9 +86,9 @@ function applySettings(){
   document.documentElement.lang=lang==='mk'?'mk':'en';
   const u=ui();
   $('#btnToday').textContent=u.today; $('#btnPrayers').textContent=u.prayers; $('#btnBack').textContent='‹ '+u.back;
-  $('#btnBible').textContent=u.bible; $('#btnBibleBack').textContent='‹ '+u.back;
-  $('#bvTitle').textContent=lang==='both'?'Bible · Библија':u.bible; $('#bibleExt').textContent=u.bibleOpen;
-  if(bibleOpen) syncBibleOfflineMsg();
+  $('#btnBible').textContent=u.bible; $('#btnBiblija').textContent=u.biblija; $('#btnBibleBack').textContent='‹ '+u.back;
+  $('#bibleExt').textContent=u.bibleOpen;
+  if(bibleOpen){ applyBibleChrome(); syncBibleOfflineMsg() }
   $('#pvTitle').textContent=lang==='both'?'Prayers · Молитви':u.prayers; $('#q').placeholder=u.search;
   $$('[data-close]').forEach(b=>b.textContent=u.close);
   $('#mTitle').textContent=u.settings;$('#mFont').textContent=u.font;$('#mTheme').textContent=u.theme;$('#mExpand').textContent=u.sections;
@@ -220,36 +223,84 @@ function closePrayers(){
 }
 function backToCalendar(){ if(pvPushed){ history.back(); return } if(pvFrom==='month') showMonth(mvM); else show(cur) }
 
-/* ---------- Bible (embeds orthodoxbibleonline.com; text is not copied) ---------- */
+/* ---------- Bible tabs (embed sites in an iframe; text is not copied or cached) ---------- */
+function bibleSpec(src){ return BIBLES[src==='biblija'?'biblija':'bible'] }
+function applyBibleChrome(){
+  const b=bibleSpec(bibleSrc), u=ui();
+  $('#bvTitle').textContent=lang==='both'?b.titleBoth:(lang==='mk'?b.titleMk:b.titleEn);
+  $('#bibleExt').setAttribute('href',b.url); $('#bibleExt').textContent=u.bibleOpen;
+  $('#bibleFrame').title=b.frameTitle;
+  $('#btnBible').classList.toggle('on',!!(bibleOpen&&bibleSrc==='bible'));
+  $('#btnBiblija').classList.toggle('on',!!(bibleOpen&&bibleSrc==='biblija'));
+}
 function syncBibleOfflineMsg(){
   const box=$('#bibleOffline'), u=ui();
   box.innerHTML=lang==='both'?`<p>${esc(T.en.bibleOff)}</p><p>${esc(T.mk.bibleOff)}</p>`:`<p>${esc(u.bibleOff)}</p>`;
 }
-function syncBibleFrame(){
-  const online=navigator.onLine!==false, off=$('#bibleOffline'), fr=$('#bibleFrame');
-  syncBibleOfflineMsg();
-  if(!online){ off.hidden=false; fr.hidden=true; return }
-  off.hidden=true; fr.hidden=false;
-  if(fr.getAttribute('src')!==BIBLE_URL) fr.setAttribute('src',BIBLE_URL);
+function showBibleFallback(){
+  const b=bibleSpec(bibleSrc), u=ui(), box=$('#bibleFallback'), fr=$('#bibleFrame');
+  const msg=lang==='both'?`<p>${esc(T.en.bibleFail)}</p><p>${esc(T.mk.bibleFail)}</p>`:`<p>${esc(u.bibleFail)}</p>`;
+  box.innerHTML=msg+`<p><a id="bibleFallbackOpen" href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${esc(u.bibleOpen)}</a></p>`;
+  box.hidden=false; if(fr) fr.hidden=true;
 }
-function openBible(push){
+function resetBibleFrame(){
+  const old=$('#bibleFrame'); if(!old) return null;
+  const fr=old.cloneNode(false);
+  fr.removeAttribute('src'); fr.hidden=old.hidden;
+  old.replaceWith(fr);
+  return fr;
+}
+function frameLooksBlank(fr){
+  try{
+    const href=fr.contentWindow&&fr.contentWindow.location&&String(fr.contentWindow.location.href||'');
+    return !href||href==='about:blank'||href.startsWith('chrome-error')||href.startsWith('chrome://');
+  }catch(e){ return false } // SecurityError: a cross-origin page loaded
+}
+function syncBibleFrame(){
+  const online=navigator.onLine!==false, off=$('#bibleOffline'), fall=$('#bibleFallback'), b=bibleSpec(bibleSrc);
+  let fr=$('#bibleFrame');
+  syncBibleOfflineMsg(); applyBibleChrome();
+  if(!online){ off.hidden=false; fall.hidden=true; fr=resetBibleFrame()||fr; fr.hidden=true; return }
+  off.hidden=true;
+  if(fr.getAttribute('src')!==b.url){
+    const gen=++bibleLoadGen;
+    fall.hidden=true;
+    fr=resetBibleFrame(); fr.hidden=false;
+    fr.onload=()=>{ if(gen!==bibleLoadGen) return; if(frameLooksBlank(fr)) showBibleFallback() };
+    fr.onerror=()=>{ if(gen!==bibleLoadGen) return; showBibleFallback() };
+    fr.setAttribute('src',b.url);
+    setTimeout(()=>{ if(gen!==bibleLoadGen||!bibleOpen||navigator.onLine===false||!fall.hidden) return;
+      if(frameLooksBlank($('#bibleFrame'))) showBibleFallback();
+    }, 8000);
+  } else { fall.hidden=true; fr.hidden=false }
+}
+function openBible(src, push){
+  if(push===undefined && (src===true||src===false||src==null)){ push=!!src; src='bible' }
+  src=src==='biblija'?'biblija':'bible';
   closePanels();
   if(prayersOpen) closePrayers();
+  const want=bibleSpec(src).hash, switching=bibleOpen&&bibleSrc!==src;
   if(!bibleOpen){
-    bvFrom=view; bibleOpen=true; document.body.classList.add('bv');
+    bvFrom=view; bibleOpen=true; bibleSrc=src; document.body.classList.add('bv');
     $('#day').hidden=true; $('#month').hidden=true; $('#prayers').hidden=true; $('#bible').hidden=false; $('.bvnav').hidden=false;
-    $('#btnBible').classList.add('on'); $('#btnToday').classList.remove('on'); $('#btnPrayers').classList.remove('on');
-    if(push){ history.pushState(null,'','#bible'); bvPushed=true } else if(location.hash!=='#bible') history.replaceState(null,'','#bible');
+    $('#btnToday').classList.remove('on'); $('#btnPrayers').classList.remove('on');
+    if(push){ history.pushState(null,'',want); bvPushed=true } else if(location.hash!==want) history.replaceState(null,'',want);
     window.scrollTo(0,0);
+  } else if(switching){
+    bibleSrc=src; bibleLoadGen++; $('#bibleFrame').removeAttribute('src'); $('#bibleFallback').hidden=true;
+    if(push){ history.pushState(null,'',want); bvPushed=true } else if(location.hash!==want) history.replaceState(null,'',want);
   }
+  applyBibleChrome();
   syncBibleFrame();
 }
 function closeBible(){
-  if(!bibleOpen) return; bibleOpen=false; bvPushed=false;
+  if(!bibleOpen) return; bibleOpen=false; bvPushed=false; bibleLoadGen++;
   document.body.classList.remove('bv'); $('#bible').hidden=true; $('.bvnav').hidden=true;
-  $('#btnBible').classList.remove('on');
+  $('#btnBible').classList.remove('on'); $('#btnBiblija').classList.remove('on');
+  $('#bibleFallback').hidden=true;
 }
 function backFromBible(){ if(bvPushed){ history.back(); return } if(bvFrom==='month') showMonth(mvM); else show(cur) }
+function openBiblija(push){ return openBible('biblija', push) }
 
 /* ---------- month view (opens on launch) ---------- */
 const shortName=(n,mk)=>{let t=String(n||'').replace(/\s*[–(\[].*$/,'');
@@ -522,7 +573,8 @@ function init(){
   $('#month').addEventListener('click',e=>{const b=e.target.closest('button[data-d]'); if(b) openDay(b.dataset.d)});
   $('#btnPrayers').onclick=()=>prayersOpen?backToCalendar():openPrayers(true);
   $('#btnBack').onclick=backToCalendar;
-  $('#btnBible').onclick=()=>bibleOpen?backFromBible():openBible(true);
+  $('#btnBible').onclick=()=>bibleOpen&&bibleSrc==='bible'?backFromBible():openBible('bible',true);
+  $('#btnBiblija').onclick=()=>bibleOpen&&bibleSrc==='biblija'?backFromBible():openBible('biblija',true);
   $('#btnBibleBack').onclick=backFromBible;
   window.addEventListener('online',()=>{if(bibleOpen)syncBibleFrame()});
   window.addEventListener('offline',()=>{if(bibleOpen)syncBibleFrame()});
@@ -553,16 +605,16 @@ function init(){
   mv.addEventListener('touchend',e=>{ if(!mok)return; mok=false; const t=e.changedTouches[0],dx=t.clientX-mx,dy=t.clientY-my;
     if(Math.abs(dx)>60&&Math.abs(dx)>1.8*Math.abs(dy)&&Date.now()-mt<800) stepMonth(dx<0?1:-1) },{passive:true});
   window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);
-    if(h==='bible'){ if(prayersOpen) closePrayers(); if(!bibleOpen) openBible(false); return }
+    if(h==='bible'||h==='biblija'){ if(prayersOpen) closePrayers(); openBible(h,false); return }
     if(h==='prayers'){ if(bibleOpen) closeBible(); if(!prayersOpen) openPrayers(false); return }
     const mm=vmonth(h);
     if(mm){ const t=view==='day'?+cur.slice(5,7):mm; if(bibleOpen||prayersOpen||view!=='month'||mvM!==t) showMonth(t,{noHash:t===mm}); return }
     if(valid(h)){ if(view!=='day'||prayersOpen||bibleOpen||h!==cur) show(h); return }
     if(!h) showMonth(+cur.slice(5,7),{noHash:true}) });
   $('#foot').innerHTML='Sources: mpc.org.mk (calendar) · m-p-c.org (Macedonian Bible) · standard Orthodox lectionary (holytrinityorthodox.com) for weekday readings · day icons from Wikimedia Commons (public domain / free licences, credited under each icon). Works offline. No tracking.';
-  // On launch the app opens on the current month; deep links (#YYYY-MM-DD, #YYYY-MM, #prayers, #bible) still work.
+  // On launch the app opens on the current month; deep links (#YYYY-MM-DD, #YYYY-MM, #prayers, #bible, #biblija) still work.
   const h=location.hash.slice(1); cur=todayInRange(); updateNav();
-  if(valid(h)) show(h); else { showMonth(vmonth(h)||+cur.slice(5,7)); if(h==='prayers') openPrayers(false); else if(h==='bible') openBible(false) }
+  if(valid(h)) show(h); else { showMonth(vmonth(h)||+cur.slice(5,7)); if(h==='prayers') openPrayers(false); else if(h==='bible'||h==='biblija') openBible(h,false) }
   loadIndex().catch(()=>{});
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{window.MPC_SW='ready';navigator.serviceWorker.ready.then(reg=>{if(reg.active)reg.active.postMessage('warm-icons')}).catch(()=>{});$('#swStatus').textContent=ui().offline})
@@ -575,6 +627,6 @@ async function loadAbout(){
   try{const a=await (await fetch('data/about.json')).json();
     $('#aboutBody').innerHTML=a.cover.map(c=>`<p class="small">${esc(c).replace(/\n/g,'<br>')}</p>`).join('')+'<ul>'+a.howto.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>';}catch(e){aboutDone=false}
 }
-window.MPC={show,step,showMonth,openDay,backToMonth,stepMonth,get view(){return bibleOpen?'bible':prayersOpen?'prayers':view},get month(){return mvM},get cur(){return cur},loadMonth,sydneyToday,openPrayers,closePrayers:backToCalendar,openBible,closeBible:backFromBible,get prayersOpen(){return prayersOpen},get bibleOpen(){return bibleOpen}};
+window.MPC={show,step,showMonth,openDay,backToMonth,stepMonth,get view(){return bibleOpen?(bibleSrc==='biblija'?'biblija':'bible'):prayersOpen?'prayers':view},get month(){return mvM},get cur(){return cur},loadMonth,sydneyToday,openPrayers,closePrayers:backToCalendar,openBible:(push)=>openBible('bible',push),openBiblija,closeBible:backFromBible,get prayersOpen(){return prayersOpen},get bibleOpen(){return !!(bibleOpen&&bibleSrc==='bible')},get biblijaOpen(){return !!(bibleOpen&&bibleSrc==='biblija')}};
 init();
 })();

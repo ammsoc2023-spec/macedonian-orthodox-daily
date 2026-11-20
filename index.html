@@ -29,7 +29,10 @@
     </div>
     <button id="btnSearch" class="icon" type="button" aria-label="Search saints">&#x1F50D;&#xFE0E;</button>
     <button id="btnMenu" class="icon" type="button" aria-label="Settings">&#9881;&#xFE0E;</button>
-    <button id="btnBible" class="pill" type="button">Bible</button>
+    <span class="biblePair">
+      <button id="btnBible" class="pill" type="button">Bible</button>
+      <button id="btnBiblija" class="pill" type="button">Biblija.mk</button>
+    </span>
   </div>
   <div class="row2">
     <nav class="dvnav">
@@ -61,6 +64,7 @@
 <main id="prayers" hidden></main>
 <main id="bible" hidden>
   <div id="bibleOffline" hidden></div>
+  <div id="bibleFallback" hidden></div>
   <iframe id="bibleFrame" title="Orthodox Bible Online" hidden></iframe>
 </main>
 <footer id="foot"></footer>
