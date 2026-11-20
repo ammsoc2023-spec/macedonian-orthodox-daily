@@ -18,7 +18,7 @@ const T={
      offline:'Offline ready: all 365 days are stored on this device.',offlineNo:'Offline storage not available in this browser.',
      listen:'Read aloud',scopeAll:'Whole day',scopeSaints:'Saints only',scopeRead:'Readings only',scopeCom:'Commentary only',
      lEn:'English',lMk:'Macedonian',lBoth:'English, then Macedonian',voice:'Voice',reading:'Reading',paused:'Paused',done:'Finished',
-     prayers:'Prayers',back:'Calendar',tapday:'Tap a day to open it.',feasts:'Feasts and red-letter days this month',mlegend:'Red = Sunday / red-letter day · ★ = Great Feast · purple underline = fast day · small number = old-style date · gold ring = today',pAll:'All prayers',pSec:{morning:'Morning prayers',table:'Prayers at table',day:'Prayers during the day',evening:'Evening prayers'},noprayers:'Could not load the prayers.',bible:'Bible',biblija:'Biblija.mk',bibleOpen:'Open in browser',bibleOff:'The Bible needs an internet connection. You can still use the calendar and prayers offline.',bibleFail:'This page could not be shown here. You can open it in your browser.'},
+     prayers:'Prayers',back:'Calendar',tapday:'Tap a day to open it.',feasts:'Feasts and red-letter days this month',mlegend:'Red = Sunday / red-letter day · ★ = Great Feast · purple underline = fast day · small number = old-style date · gold ring = today',pAll:'All prayers',pSec:{morning:'Morning prayers',table:'Prayers at table',day:'Prayers during the day',evening:'Evening prayers'},noprayers:'Could not load the prayers.',bible:'Bible',biblija:'Biblija',bibleOpen:'Open in browser',bibleOff:'The Bible needs an internet connection. You can still use the calendar and prayers offline.',bibleFail:'This page could not be shown here. You can open it in your browser.'},
  mk:{today:'Денес',saints:'Светители и празници',fasting:'Пост',readings:'Читања',commentary:'Толкување',notes:'Белешки',
      lives:'Светители на денот — житија и поуки',noread:'За овој ден нема читања.',search:'Пребарај светители (англиски или македонски)',
      close:'Затвори',goto:'Оди на датум',settings:'Поставки',font:'Големина на текст',theme:'Изглед',sections:'Делови',openall:'Отвори ги сите',closeall:'Затвори ги сите',
@@ -28,7 +28,7 @@ const T={
      offline:'Подготвено за офлајн: сите 365 дена се зачувани на уредот.',offlineNo:'Офлајн зачувување не е достапно во овој прелистувач.',
      listen:'Читај гласно',scopeAll:'Цел ден',scopeSaints:'Само светители',scopeRead:'Само читања',scopeCom:'Само толкување',
      lEn:'Англиски',lMk:'Македонски',lBoth:'Англиски, па македонски',voice:'Глас',reading:'Се чита',paused:'Паузирано',done:'Готово',
-     prayers:'Молитви',back:'Календар',tapday:'Допрете на ден за да го отворите.',feasts:'Празници и црвени денови во овој месец',mlegend:'Црвено = недела / црвен ден · ★ = Голем празник · виолетова линија = пост · мал број = датум по стар стил · златна рамка = денес',pAll:'Сите молитви',pSec:{morning:'Утрински молитви',table:'Молитви при трпеза',day:'Молитви преку денот',evening:'Вечерни молитви'},noprayers:'Молитвите не можат да се вчитаат.',bible:'Библија',biblija:'Библија.mk',bibleOpen:'Отвори во прелистувач',bibleOff:'За Библијата е потребна интернет-врска. Календарот и молитвите и понатаму работат офлајн.',bibleFail:'Страницата не може да се прикаже овде. Можете да ја отворите во прелистувачот.'}};
+     prayers:'Молитви',back:'Календар',tapday:'Допрете на ден за да го отворите.',feasts:'Празници и црвени денови во овој месец',mlegend:'Црвено = недела / црвен ден · ★ = Голем празник · виолетова линија = пост · мал број = датум по стар стил · златна рамка = денес',pAll:'Сите молитви',pSec:{morning:'Утрински молитви',table:'Молитви при трпеза',day:'Молитви преку денот',evening:'Вечерни молитви'},noprayers:'Молитвите не можат да се вчитаат.',bible:'Библија',biblija:'Библија',bibleOpen:'Отвори во прелистувач',bibleOff:'За Библијата е потребна интернет-врска. Календарот и молитвите и понатаму работат офлајн.',bibleFail:'Страницата не може да се прикаже овде. Можете да ја отворите во прелистувачот.'}};
 let lang=LS.get('lang','en'); if(!['en','mk','both'].includes(lang)) lang='en';
 const ui=()=>T[lang==='mk'?'mk':'en'];
 let cur=null, months={}, index=null, notice='', prayersOpen=false, pvPushed=false, prayersP=null;
@@ -36,7 +36,7 @@ let view='day', mvM=1, dayPushed=false, pvFrom='day';
 let bibleOpen=false, bibleSrc='bible', bvPushed=false, bvFrom='day', bibleLoadGen=0;
 const BIBLES={
   bible:{url:'https://www.orthodoxbibleonline.com/',hash:'#bible',titleEn:'Bible',titleMk:'Библија',titleBoth:'Bible · Библија',frameTitle:'Orthodox Bible Online'},
-  biblija:{url:'https://biblija.mk/biblija/',hash:'#biblija',titleEn:'Biblija.mk',titleMk:'Библија.mk',titleBoth:'Biblija.mk · Библија.mk',frameTitle:'Biblija.mk'}
+  biblija:{url:'https://biblija.mk/biblija/',hash:'#biblija',titleEn:'Biblija',titleMk:'Библија',titleBoth:'Biblija · Библија',frameTitle:'Biblija'}
 };
 const vmonth=h=>/^2026-(0[1-9]|1[0-2])$/.test(h)?+h.slice(5,7):0;
 const monthName=(m,mk)=>mk?MON_MK[m-1].replace(/^./,c=>c.toUpperCase()):MON_EN[m-1];
