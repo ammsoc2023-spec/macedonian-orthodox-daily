@@ -382,6 +382,48 @@ async function doSearch(){
 const TTS=(function(){
   const S=window.speechSynthesis, ok=!!(S&&window.SpeechSynthesisUtterance);
   const st={q:[],i:0,playing:false,paused:false,date:null,key:'',token:0,hl:null};
+
+  /* ---- keep the screen on while reading aloud.
+     Screen Wake Lock API (Safari 16.4+, home-screen apps from iOS 18.4, Chrome/Android); on older iOS a tiny silent,
+     muted, looping inline video (bundled below, 2 s, 16x16) is played instead, the NoSleep technique. Held only while
+     speech is actually playing: released on finish, pause, stop, error-stop and when the app goes to the background;
+     taken again when the app comes back while still reading. The phone's Auto-Lock setting is not changed. */
+  const Awake=(function(){
+    const ua=navigator.userAgent||'';
+    const iosV=(()=>{let m=/(?:iPhone|iPad|iPod)[^)]*? OS (\d+)_(\d+)/.exec(ua); if(!m&&/Macintosh/.test(ua)&&navigator.maxTouchPoints>1) m=/Version\/(\d+)\.(\d+)/.exec(ua); return m?(+m[1])+(+m[2])/100:0})();
+    const standalone=()=>!!(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches));
+    // Home-screen apps before iOS 18.4 expose navigator.wakeLock but it does not keep the screen on, so use the video there.
+    const wlUsable=()=>!!(navigator.wakeLock&&navigator.wakeLock.request)&&!(iosV&&iosV<18.04&&standalone());
+    const MP4='data:video/mp4;base64,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';
+    let want=false, lock=null, pending=null, vid=null;
+    function video(){
+      if(!vid){ vid=document.createElement('video'); vid.muted=true; vid.defaultMuted=true; vid.loop=true; vid.playsInline=true;
+        ['muted','playsinline','webkit-playsinline','loop'].forEach(a=>vid.setAttribute(a,'')); vid.setAttribute('aria-hidden','true'); vid.setAttribute('tabindex','-1'); vid.preload='auto';
+        vid.style.cssText='position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1';
+        vid.src=MP4; document.body.appendChild(vid) }
+      return vid;
+    }
+    function playVideo(){ try{ const v=video(); if(!v.paused) return; const p=v.play(); if(p&&p.catch) p.catch(()=>{}) }catch(e){} }
+    function stopVideo(){ if(vid&&!vid.paused){ try{vid.pause()}catch(e){} } }
+    function acquire(){
+      if(!want||document.visibilityState==='hidden') return;
+      if(!wlUsable()){ playVideo(); return }
+      if(lock&&!lock.released) return; if(pending) return;
+      try{
+        pending=navigator.wakeLock.request('screen').then(l=>{ pending=null;
+          if(!want||document.visibilityState==='hidden'){ try{l.release()}catch(e){} return }
+          lock=l; stopVideo(); try{ l.addEventListener('release',()=>{ if(lock===l) lock=null }) }catch(e){}
+        },()=>{ pending=null; if(want) playVideo() });
+      }catch(e){ pending=null; playVideo() }
+    }
+    function drop(){ const l=lock; lock=null; if(l){ try{ const p=l.release(); if(p&&p.catch) p.catch(()=>{}) }catch(e){} } stopVideo() }
+    function on(){ want=true; acquire() }
+    function off(){ want=false; drop() }
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') drop(); else if(want) acquire() });
+    window.addEventListener('pagehide',drop);
+    window.addEventListener('pageshow',()=>{ if(want) acquire() });
+    return {on,off,get held(){return !!((lock&&!lock.released)||(vid&&!vid.paused))},get wanted(){return want},get mode(){return wlUsable()?'wakelock':'video'}};
+  })();
   let scope=LS.get('tts.scope','all'), pscope=LS.get('tts.pscope','all'), tlang=LS.get('tts.lang',null), rate=+LS.get('tts.rate',1);
   const MKPREF=['mk','sr','bg','ru'], LNAME={mk:'Macedonian',sr:'Serbian',bg:'Bulgarian',ru:'Russian'}, LNAME_MK={mk:'македонски',sr:'српски',bg:'бугарски',ru:'руски'};
   const vl=v=>(v.lang||'').replace('_','-').toLowerCase();
@@ -512,7 +554,9 @@ const TTS=(function(){
     $('#ttsNow').textContent=s; $$('.speak').forEach(b=>b.classList.toggle('on',st.playing&&st.date===ctx()));
     $('#ttsNote').textContent=note();
   }
-  async function start(){
+  // Wake lock is asked for synchronously inside the tap, before any await (keeps the user gesture for the iOS video fallback).
+  function start(){ Awake.on(); return start0().catch(e=>{ if(!st.playing||st.paused) Awake.off(); throw e }) }
+  async function start0(){
     const c=ctx(), L=effLang();
     if(c==='prayers'){ const d=await loadPrayers(); st.q=buildPrayers(d,pscope,L); st.key=c+pscope+L }
     else { const r=await getDay(c); st.q=(L==='both'?['en','mk']:[L]).flatMap(x=>build(r.day,scope,x)); st.key=c+scope+L }
@@ -520,9 +564,9 @@ const TTS=(function(){
     st.token++; try{S.cancel()}catch(e){}
     st.playing=true; st.paused=false; speakNext();
   }
-  function pause(){ st.token++; st.paused=true; try{S.cancel()}catch(e){} status() }   // cancel+restart chunk: reliable on iOS and Android
-  function resume(){ st.paused=false; st.token++; speakNext() }
-  function stop(finished){ st.token++; try{S.cancel()}catch(e){} st.playing=false; st.paused=false; st.i=0; clearHl(); status(); if(finished===true) $('#ttsNow').textContent=ui().done }
+  function pause(){ st.token++; st.paused=true; Awake.off(); try{S.cancel()}catch(e){} status() }   // cancel+restart chunk: reliable on iOS and Android
+  function resume(){ st.paused=false; st.token++; Awake.on(); speakNext() }
+  function stop(finished){ st.token++; Awake.off(); try{S.cancel()}catch(e){} st.playing=false; st.paused=false; st.i=0; clearHl(); status(); if(finished===true) $('#ttsNow').textContent=ui().done }
   function restartChunk(){ if(st.playing&&!st.paused){ st.token++; try{S.cancel()}catch(e){} speakNext() } }
   function fillVoices(){
     [['en','#ttsVoiceEn'],['mk','#ttsVoiceMk']].forEach(([L,id])=>{
@@ -559,7 +603,7 @@ const TTS=(function(){
     start();
   }
   function refreshDay(){ if(st.playing&&!st.paused) highlight(st.q[st.i]); status() }
-  return {ok,init,labels,fromDay,refreshDay,_state:st,_build:build,_buildPrayers:buildPrayers,_heading:heading,_chunks:chunks,_note:note,_voiceFor:voiceFor};
+  return {ok,init,labels,_awake:Awake,fromDay,refreshDay,_state:st,_build:build,_buildPrayers:buildPrayers,_heading:heading,_chunks:chunks,_note:note,_voiceFor:voiceFor};
 })();
 window.MPC_TTS=TTS;
 
