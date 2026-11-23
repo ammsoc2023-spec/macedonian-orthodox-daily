@@ -641,6 +641,57 @@ const TTS=(function(){
 })();
 window.MPC_TTS=TTS;
 
+/* ---------- auto-update: the same link / home-screen icon always runs the newest version ----------
+   Checks for a new version on start, whenever the app comes back to the foreground (iPhone home-screen apps resume
+   instead of reloading), when the connection returns and every 30 min while open. The new service worker takes over
+   at once; the page then reloads itself quietly (same day, same scroll position) - but never in the middle of
+   read-aloud: it waits until the reader is stopped or finished. version.json (no-store) is a backstop check. */
+const Updater=(function(){
+  const SWC='serviceWorker' in navigator?navigator.serviceWorker:null;
+  let had=!!(SWC&&SWC.controller);   // a first-ever install takes control once: nothing to refresh then
+  let reg=null, pending=false, reloading=false, last=0, timer=null;
+  const busy=()=>{ try{ return !!(TTS._state&&TTS._state.playing) }catch(e){ return false } };
+  function reload(){
+    if(reloading) return;
+    try{ const t=+sessionStorage.getItem('upd.at')||0, w=20000-(Date.now()-t); if(w>0&&w<=20000){ setTimeout(reload,w); return } sessionStorage.setItem('upd.at',Date.now());
+         sessionStorage.setItem('upd.pos',JSON.stringify({h:location.hash,y:window.scrollY,t:Date.now()})) }catch(e){}
+    reloading=true; location.reload();
+  }
+  function apply(){ pending=true; if(!busy()) reload(); else if(!timer) timer=setInterval(()=>{ if(!busy()){ clearInterval(timer); timer=null; reload() } },1500) }
+  function swVersion(){
+    return new Promise(res=>{ const c=SWC&&SWC.controller; if(!c) return res(null);
+      const ch=new MessageChannel(); const t=setTimeout(()=>res(null),3000); ch.port1.onmessage=e=>{clearTimeout(t);res(e.data)}; c.postMessage('version',[ch.port2]) });
+  }
+  async function check(force){
+    const now=Date.now(); if(!reg||(!force&&now-last<15000)) return; last=now;
+    try{ await reg.update() }catch(e){}
+    try{
+      const v=(await (await fetch('version.json?t='+now,{cache:'no-store'})).json()).v, cur=await swVersion();
+      if(v&&cur&&v!==cur){ if(reg.waiting) reg.waiting.postMessage('skip-waiting'); else { try{ await reg.update() }catch(e){} } }
+    }catch(e){}
+  }
+  function register(onReady,onFail){
+    if(!SWC){ onFail(); return }
+    SWC.addEventListener('controllerchange',()=>{ if(had) apply(); else had=true });
+    SWC.register('sw.js',{updateViaCache:'none'}).then(r=>{ reg=r;
+      r.addEventListener('updatefound',()=>{ const w=r.installing; if(w) w.addEventListener('statechange',()=>{ if(w.state==='installed'&&r.waiting) r.waiting.postMessage('skip-waiting') }) });
+      if(r.waiting) r.waiting.postMessage('skip-waiting');
+      check(true); return SWC.ready }).then(onReady).catch(onFail);
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) check() });
+    window.addEventListener('pageshow',e=>{ if(e.persisted) check(true) });
+    window.addEventListener('focus',()=>check());
+    window.addEventListener('online',()=>check(true));
+    setInterval(()=>{ if(!document.hidden) check(true) },30*60*1000);
+  }
+  function restore(){   // after an automatic update reload: back to the same place
+    try{ const p=JSON.parse(sessionStorage.getItem('upd.pos')||'null'); sessionStorage.removeItem('upd.pos');
+      if(!p||Date.now()-p.t>30000||p.h!==location.hash||!p.y) return;
+      [150,500,1200].forEach(ms=>setTimeout(()=>{ if(Math.abs(window.scrollY-p.y)>4) window.scrollTo(0,p.y) },ms)) }catch(e){}
+  }
+  return {register,check,restore,get pending(){return pending},_apply:apply};
+})();
+window.MPC_UPD=Updater;
+
 /* ---------- wiring ---------- */
 function init(){
   TTS.init(); applySettings();
@@ -695,8 +746,8 @@ function init(){
   if(valid(h)) show(h); else { showMonth(vmonth(h)||+cur.slice(5,7)); if(h==='prayers') openPrayers(false); else if(h==='bible'||h==='biblija') openBible(h,false) }
   loadIndex().catch(()=>{});
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{window.MPC_SW='ready';navigator.serviceWorker.ready.then(reg=>{if(reg.active)reg.active.postMessage('warm-icons')}).catch(()=>{});$('#swStatus').textContent=ui().offline})
-      .catch(e=>{window.MPC_SW='error: '+e.message;$('#swStatus').textContent=ui().offlineNo});
+    Updater.register(()=>{window.MPC_SW='ready';navigator.serviceWorker.ready.then(reg=>{if(reg.active)reg.active.postMessage('warm-icons')}).catch(()=>{});$('#swStatus').textContent=ui().offline},e=>{e=e||{message:'unsupported'};window.MPC_SW='error: '+e.message;$('#swStatus').textContent=ui().offlineNo});
+    Updater.restore();
   } else $('#swStatus').textContent=ui().offlineNo;
 }
 let aboutDone=false;
