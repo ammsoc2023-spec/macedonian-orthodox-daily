@@ -119,8 +119,6 @@ function section(L,d,month){
     rb+=`<div class="reading"><h3${k('r'+i+'h')}>${esc(E?r.h_en:r.h_mk)}</h3>`;
     rb+=`<p class="text"${k('r'+i+'t')}>${esc(E?r.en:r.mk)}</p>`;
     rb+=det('commentary',u.commentary,`<p class="text"${k('r'+i+'c')}>${esc(E?r.com_en:r.com_mk)}</p>`);
-    const ns=E?r.notes_en:r.notes_mk;
-    rb+=det('notes',u.notes,`<ol class="notes">${ns.map((n,j)=>`<li${k('r'+i+'n'+j)}>${esc(n)}</li>`).join('')}</ol>`);
     rb+='</div>';
   });
   h+=det('readings',u.readings+(d.readings.length?` <span class="small">(${d.readings.length})</span>`:''),rb);
@@ -518,7 +516,7 @@ const TTS=(function(){
     if(sc==='all'){
       head(); saints();
       d.readings.forEach((r,i)=>{ add('r'+i+'h',heading(E?r.h_en:r.h_mk,E)); add('r'+i+'t',E?r.en:r.mk);
-        add('r'+i+'c',u.commentary+'. '+(E?r.com_en:r.com_mk)); const ns=E?r.notes_en:r.notes_mk; if(ns.length){ add('r'+i+'n0',u.notes+'.'); ns.forEach((n,j)=>add('r'+i+'n'+j,n)) } });
+        add('r'+i+'c',u.commentary+'. '+(E?r.com_en:r.com_mk)); });
       lives();
     } else if(sc==='saints'){ head(); saints(); lives() }
     else if(sc==='readings'){ head(); if(!d.readings.length) add('hd',u.noread); d.readings.forEach((r,i)=>{ add('r'+i+'h',heading(E?r.h_en:r.h_mk,E)); add('r'+i+'t',E?r.en:r.mk)}) }
