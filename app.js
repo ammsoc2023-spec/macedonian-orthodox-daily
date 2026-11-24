@@ -422,7 +422,7 @@ const TTS=(function(){
     window.addEventListener('pageshow',()=>{ if(want) acquire() });
     return {on,off,get held(){return !!((lock&&!lock.released)||(vid&&!vid.paused))},get wanted(){return want},get mode(){return wlUsable()?'wakelock':'video'}};
   })();
-  let scope=LS.get('tts.scope','all'), pscope=LS.get('tts.pscope','all'), tlang=LS.get('tts.lang',null), rate=+LS.get('tts.rate',0.9);
+  let scope=LS.get('tts.scope','all'), pscope=LS.get('tts.pscope','all'), tlang=LS.get('tts.lang',null), rate=+LS.get('tts.rate',1);
   const MKPREF=['mk','sr','bg','ru'], LNAME={mk:'Macedonian',sr:'Serbian',bg:'Bulgarian',ru:'Russian'}, LNAME_MK={mk:'македонски',sr:'српски',bg:'бугарски',ru:'руски'};
   const vl=v=>(v.lang||'').replace('_','-').toLowerCase();
   function voices(){try{return ok?(S.getVoices()||[]).filter(v=>!NOVELTY.test(v.name||'')):[]}catch(e){return []}}
@@ -491,8 +491,138 @@ const TTS=(function(){
     return `${kind}${m[2]?', '+m[2]:''}: ${parts.join('; ')}. ${clean(m[4])}.`;
   }
   const ABBR=/(?:^|\s)(St|Sts|Ss|Ven|Matt|Rom|Gal|Heb|Eph|Phil|Col|Gen|Isa|Prov|Zech|Cor|Thess|Tim|Pet|Mr|Mrs|Dr|cf|ch|vv?|Св|св|Свв|свв|ст|гл|сп|Мат|Рим|Гал|Евр|Ефес|Кол|Јак|Кор|Тим|Пет|Сол|Јов|Филип|[A-ZА-Ш])\.$/;
-  function chunks(t){
-    t=clean(t); if(!t) return [];
+  /* ---- spoken-text clean-up, so the voice reads in a natural flow (display text is never changed):
+     Bible references in full ("Gal. 5:22" -> "Galatians, chapter 5, verse 22"), abbreviations (St. -> Saint, св. -> свети,
+     d. -> died, поч. -> починал ...), Roman numerals (Leo III -> Leo the Third, во IV век -> во четвртиот век), number ranges
+     and slashes, brackets turned into short pauses, words in another script dropped (an English voice cannot read Cyrillic). */
+  const SAY=(function(){
+    const ORD_EN=['','First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth','Eleventh','Twelfth','Thirteenth','Fourteenth','Fifteenth','Sixteenth','Seventeenth','Eighteenth','Nineteenth','Twentieth','Twenty-first'];
+    const ORD_MK=['','први','втори','трети','четврти','петти','шести','седми','осми','деветти','десетти','единаесетти','дванаесетти','тринаесетти','четиринаесетти','петнаесетти','шеснаесетти','седумнаесетти','осумнаесетти','деветнаесетти','дваесетти','дваесет и први'];
+    const rom=s=>{const V={I:1,V:5,X:10,L:50,C:100};let n=0;for(let i=0;i<s.length;i++){const a=V[s[i]],b=V[s[i+1]]||0;n+=a<b?-a:a}return n};
+    const EN_B={Matt:'Matthew',Mat:'Matthew',Mt:'Matthew',Matthew:'Matthew',Mk:'Mark',Mark:'Mark',Lk:'Luke',Luke:'Luke',Jn:'John',John:'John',Acts:'Acts',
+      Rom:'Romans',Romans:'Romans',Cor:'Corinthians',Corinthians:'Corinthians',Gal:'Galatians',Galatians:'Galatians',Eph:'Ephesians',Ephesians:'Ephesians',
+      Phil:'Philippians',Philippians:'Philippians',Col:'Colossians',Colossians:'Colossians',Thess:'Thessalonians',Thessalonians:'Thessalonians',
+      Tim:'Timothy',Timothy:'Timothy',Tit:'Titus',Titus:'Titus',Philem:'Philemon',Philemon:'Philemon',Heb:'Hebrews',Hebrews:'Hebrews',Jas:'James',James:'James',
+      Pet:'Peter',Peter:'Peter',Jude:'Jude',Rev:'Revelation',Revelation:'Revelation',Apoc:'Revelation',Gen:'Genesis',Genesis:'Genesis',Exod:'Exodus',Ex:'Exodus',Exodus:'Exodus',
+      Lev:'Leviticus',Leviticus:'Leviticus',Num:'Numbers',Numbers:'Numbers',Deut:'Deuteronomy',Deuteronomy:'Deuteronomy',Josh:'Joshua',Joshua:'Joshua',Judg:'Judges',Judges:'Judges',
+      Ruth:'Ruth',Sam:'Samuel',Samuel:'Samuel',Kgs:'Kings',Kings:'Kings',Kingdoms:'Kingdoms',Chr:'Chronicles',Chronicles:'Chronicles',Neh:'Nehemiah',Nehemiah:'Nehemiah',Job:'Job',
+      Ps:'Psalm',Psa:'Psalm',Psalm:'Psalm',Psalms:'Psalm',Prov:'Proverbs',Proverbs:'Proverbs',Eccl:'Ecclesiastes',Ecclesiastes:'Ecclesiastes',Song:'Song of Songs',
+      Wis:'Wisdom',Wisdom:'Wisdom',Sir:'Sirach',Sirach:'Sirach',Isa:'Isaiah',Is:'Isaiah',Isaiah:'Isaiah',Jer:'Jeremiah',Jeremiah:'Jeremiah',Lam:'Lamentations',Bar:'Baruch',Baruch:'Baruch',
+      Ezek:'Ezekiel',Ezekiel:'Ezekiel',Dan:'Daniel',Daniel:'Daniel',Hos:'Hosea',Hosea:'Hosea',Joel:'Joel',Amos:'Amos',Obad:'Obadiah',Jonah:'Jonah',Mic:'Micah',Micah:'Micah',
+      Nah:'Nahum',Nahum:'Nahum',Hab:'Habakkuk',Habakkuk:'Habakkuk',Zeph:'Zephaniah',Zephaniah:'Zephaniah',Hag:'Haggai',Haggai:'Haggai',Zech:'Zechariah',Zechariah:'Zechariah',Mal:'Malachi',Malachi:'Malachi',Macc:'Maccabees',Maccabees:'Maccabees',
+      Obadiah:'Obadiah',Lamentations:'Lamentations',Esther:'Esther',Esth:'Esther',Ezra:'Ezra',Tobit:'Tobit',Tob:'Tobit',Judith:'Judith',Jdt:'Judith',Ecclus:'Sirach',Canticles:'Song of Songs',Apocalypse:'Revelation',Lk_:'Luke'};
+    const MK_B={'Мат':'Евангелието според Матеј','Матеј':'Евангелието според Матеј','Мар':'Евангелието според Марко','Марко':'Евангелието според Марко','Лук':'Евангелието според Лука','Лука':'Евангелието според Лука',
+      'Јов':'Евангелието според Јован','Јован':'Евангелието според Јован','Дела':'Делата на апостолите','Рим':'Посланието до Римјаните','Кор':'Посланието до Коринтјаните','Гал':'Посланието до Галатјаните',
+      'Ефес':'Посланието до Ефесците','Еф':'Посланието до Ефесците','Филип':'Посланието до Филипјаните','Фил':'Посланието до Филипјаните','Кол':'Посланието до Колошаните','Сол':'Посланието до Солуњаните',
+      'Тим':'Посланието до Тимотеј','Тит':'Посланието до Тит','Филим':'Посланието до Филимон','Евр':'Посланието до Евреите','Јак':'Посланието на Јаков','Пет':'Посланието на Петар','Јуда':'Посланието на Јуда',
+      'Откр':'Откровението','Бит':'книгата Битие','Битие':'книгата Битие','Изл':'книгата Излез','Излез':'книгата Излез','Лев':'книгата Левит','Бр':'книгата Броеви','Број':'книгата Броеви','Пов':'книгата Второзаконие','Второзак':'книгата Второзаконие',
+      'Ис':'книгата на пророкот Исаија','Суд':'книгата Судии','Цар':'книгата Царства','Пс':'Псалм','Псалм':'Псалм','Псалми':'Псалм','Изр':'книгата Изреки','Изреки':'книгата Изреки','Проп':'книгата Проповедник','Мудр':'книгата Премудрост',
+      'Иса':'книгата на пророкот Исаија','Исаија':'книгата на пророкот Исаија','Ер':'книгата на пророкот Еремија','Еремија':'книгата на пророкот Еремија','Јер':'книгата на пророкот Еремија','Езек':'книгата на пророкот Езекиел','Езекиел':'книгата на пророкот Езекиел',
+      'Дан':'книгата на пророкот Даниил','Даниил':'книгата на пророкот Даниил','Ос':'книгата на пророкот Осија','Јоил':'книгата на пророкот Јоил','Ам':'книгата на пророкот Амос','Јона':'книгата на пророкот Јона','Мих':'книгата на пророкот Михеј','Михеј':'книгата на пророкот Михеј',
+      'Ав':'книгата на пророкот Авакум','Соф':'книгата на пророкот Софонија','Аг':'книгата на пророкот Агеј','Зах':'книгата на пророкот Захарија','Захарија':'книгата на пророкот Захарија','Мал':'книгата на пророкот Малахија','Малахија':'книгата на пророкот Малахија','Јов_':'книгата Јов'};
+    const AR_B={'مت':'إنجيل متّى','متى':'إنجيل متّى','متّى':'إنجيل متّى','مر':'إنجيل مرقس','مرقس':'إنجيل مرقس','لو':'إنجيل لوقا','لوقا':'إنجيل لوقا','يو':'إنجيل يوحنّا','يوحنا':'إنجيل يوحنّا','يوحنّا':'إنجيل يوحنّا',
+      'أع':'سفر أعمال الرسل','أعمال':'سفر أعمال الرسل','رو':'الرسالة إلى أهل رومية','رومية':'الرسالة إلى أهل رومية','كو':'الرسالة إلى أهل كورنثوس','كورنثوس':'الرسالة إلى أهل كورنثوس','غل':'الرسالة إلى أهل غلاطية','غلاطية':'الرسالة إلى أهل غلاطية',
+      'أف':'الرسالة إلى أهل أفسس','أفسس':'الرسالة إلى أهل أفسس','في':'الرسالة إلى أهل فيلبّي','فيلبي':'الرسالة إلى أهل فيلبّي','كول':'الرسالة إلى أهل كولوسّي','كولوسي':'الرسالة إلى أهل كولوسّي','تس':'الرسالة إلى أهل تسالونيكي',
+      'تي':'الرسالة إلى تيموثاوس','تيموثاوس':'الرسالة إلى تيموثاوس','تيطس':'الرسالة إلى تيطس','فل':'الرسالة إلى فيلمون','عب':'الرسالة إلى العبرانيّين','عبرانيين':'الرسالة إلى العبرانيّين','يع':'رسالة يعقوب','يعقوب':'رسالة يعقوب',
+      'بط':'رسالة بطرس','بطرس':'رسالة بطرس','يه':'رسالة يهوذا','يهوذا':'رسالة يهوذا','رؤ':'سفر الرؤيا','رؤيا':'سفر الرؤيا','تك':'سفر التكوين','تكوين':'سفر التكوين','خر':'سفر الخروج','خروج':'سفر الخروج','لا':'سفر اللاويّين','لاويين':'سفر اللاويّين',
+      'عد':'سفر العدد','عدد':'سفر العدد','تث':'سفر التثنية','تثنية':'سفر التثنية','يش':'سفر يشوع','يشوع':'سفر يشوع','قض':'سفر القضاة','قضاة':'سفر القضاة','صم':'سفر صموئيل','مل':'سفر الملوك','ملوك':'سفر الملوك','أي':'سفر أيّوب','أيوب':'سفر أيّوب',
+      'مز':'المزمور','مزمور':'المزمور','مزامير':'المزمور','أم':'سفر الأمثال','أمثال':'سفر الأمثال','جا':'سفر الجامعة','حك':'سفر الحكمة','سي':'سفر يشوع بن سيراخ','إش':'نبوءة إشعياء','إشعياء':'نبوءة إشعياء','أش':'نبوءة إشعياء',
+      'إر':'نبوءة إرميا','إرميا':'نبوءة إرميا','حز':'نبوءة حزقيال','حزقيال':'نبوءة حزقيال','دا':'نبوءة دانيال','دانيال':'نبوءة دانيال','هو':'نبوءة هوشع','يوء':'نبوءة يوئيل','يوئيل':'نبوءة يوئيل','عا':'نبوءة عاموس',
+      'اشعياء':'نبوءة إشعياء','ايوب':'سفر أيّوب','امثال':'سفر الأمثال','الأمثال':'سفر الأمثال','صموئيل':'سفر صموئيل','ارميا':'نبوءة إرميا','زكريا':'نبوءة زكريّا','دانيال':'نبوءة دانيال','ميخا':'نبوءة ميخا','يوئيل':'نبوءة يوئيل','عاموس':'نبوءة عاموس','هوشع':'نبوءة هوشع','حبقوق':'نبوءة حبقوق','صفنيا':'نبوءة صفنيا','حجي':'نبوءة حجّي','ملاخي':'نبوءة ملاخي','التكوين':'سفر التكوين','الخروج':'سفر الخروج','التثنية':'سفر التثنية','العدد':'سفر العدد','اللاويين':'سفر اللاويّين','الجامعة':'سفر الجامعة','الحكمة':'سفر الحكمة','رؤيا':'سفر الرؤيا','الرؤيا':'سفر الرؤيا','أعمال':'سفر أعمال الرسل','يون':'نبوءة يونان','يونان':'نبوءة يونان','مي':'نبوءة ميخا','ميخا':'نبوءة ميخا','صف':'نبوءة صفنيا','حج':'نبوءة حجّي','زك':'نبوءة زكريّا','زكريا':'نبوءة زكريّا','ملا':'نبوءة ملاخي','ملاخي':'نبوءة ملاخي','با':'نبوءة باروخ'};
+    const NUM_EN=['','First','Second','Third'], NUM_MK=['','Првото','Второто','Третото'], NUM_AR=['','الأولى','الثانية','الثالثة'];
+    const W={en:{c:'chapter',v:'verse',vs:'verses',to:'to',and:'and',or:'or',cm:', '},mk:{c:'глава',v:'стих',vs:'стихови',to:'до',and:'и',or:'или',cm:', '},ar:{c:'الإصحاح',v:'الآية',vs:'الآيات',to:'إلى',and:'و',or:'أو',cm:'، '}};
+    // "5:22" "5:22–26" "26–8:2" "23, 24, 28" -> words
+    function verses(L,ch,rest,ps){
+      const w=W[L], items=rest.split(/\s*[,،]\s*/).filter(Boolean); let many=items.length>1;
+      const sp=items.map(r=>{const m=r.match(/^(\d+)\s*[-–]\s*(?:(\d+)\s*[:,]\s*)?(\d+)$/); if(!m) return r; many=true;
+        return m[2]?`${m[1]} ${w.to} ${w.c} ${m[2]}${w.cm}${w.v} ${m[3]}`:`${m[1]} ${w.to} ${m[3]}`});
+      const vs=sp.length>1?sp.slice(0,-1).join(w.cm)+(L==='ar'?' و':' '+w.and+' ')+sp[sp.length-1]:sp[0];
+      return `${ps?'':w.c+' '}${ch}${w.cm}${many?w.vs:w.v} ${vs}`;
+    }
+    const VS=String.raw`(\d+(?:\s*[-–]\s*\d+(?:\s*[:,]\s*\d+)?)?(?:\s*[,،]\s*\d+(?:\s*[-–]\s*\d+)?)*)`;
+    function refs(t,L){
+      if(L==='en'){
+        const re=new RegExp(String.raw`\b(?:([1-4])\s?)?([A-Z][a-z]{1,13})\.?\s(\d+)(?:/(\d+))?:\s?`+VS+String.raw`((?:\s*[;,]\s*\d+:\s?\d+(?:\s*[-–]\s*\d+)?)*)`,'g');
+        return t.replace(re,(all,n,b,ch,ch2,vv,more)=>{ const B=EN_B[b]; if(!B) return all;
+          const ps=B==='Psalm'; let s=(n?NUM_EN[+n]+' ':'')+B+(ps?' ':', ')+verses('en',ch+(ch2?' or '+ch2:''),vv,ps);
+          (more||'').replace(/(\d+):\s?(\d+(?:\s*[-–]\s*\d+)?)/g,(x,c,v)=>{ s+='; '+(ps?'Psalm ':'')+verses('en',c,v,ps) }); return s });
+      }
+      if(L==='mk'){
+        const re=new RegExp(String.raw`(?:([1-4])\.?\s?)?(?<![А-Шa-шЀ-ӿ])([А-ШЃЌЉЊЏЅЈ][а-шѓќљњџѕј]{0,9})\.?\s(\d+)(?:/(\d+))?(?:,\s?|:\s?)`+VS+String.raw`((?:\s*;\s*\d+,\s?\d+(?:\s*[-–]\s*\d+)?)*)`,'g');
+        return t.replace(re,(all,n,b,ch,ch2,vv,more)=>{ let B=MK_B[b]; if(!B) return all;
+          if(n){ B=B.replace(/^(Посланието|книгата|Евангелието)/,m=>m==='Посланието'?NUM_MK[+n]+' послание':m==='книгата'?NUM_MK[+n]==='Првото'?'првата книга':NUM_MK[+n]==='Второто'?'втората книга':'третата книга':m); if(b==='Цар') B=B.replace('книгата Царства','книга Царства'); if(b==='Јов') B=NUM_MK[+n]+' послание на Јован' }
+          const ps=B==='Псалм'; let s=B+(ps?' ':', ')+verses('mk',ch+(ch2?' или '+ch2:''),vv,ps);
+          (more||'').replace(/(\d+),\s?(\d+(?:\s*[-–]\s*\d+)?)/g,(x,c,v)=>{ s+='; '+(ps?'Псалм ':'')+verses('mk',c,v,ps) }); return s });
+      }
+      const re=new RegExp(String.raw`(?:([1-4])\s?)?([\u0621-\u064A\u0651]{1,9})\s(\d+)\s?:\s?`+VS+String.raw`((?:\s*[;؛،,]\s*\d+\s?:\s?\d+(?:\s*[-–]\s*\d+)?)*)`,'g');
+      return t.replace(re,(all,n,b,ch,vv,more)=>{ let B=b==='كو'&&!n?'الرسالة إلى أهل كولوسّي':AR_B[b]; if(!B) return all;
+        if(n) B=B.startsWith('الرسالة')?B.replace('الرسالة','الرسالة '+NUM_AR[+n]):B+' '+(['','الأوّل','الثاني','الثالث','الرابع'][+n]||n);
+        const ps=B==='المزمور'; let s=B+(ps?' ':'، ')+verses('ar',ch,vv,ps);
+        (more||'').replace(/(\d+)\s?:\s?(\d+(?:\s*[-–]\s*\d+)?)/g,(x,c,v)=>{ s+='؛ '+(ps?'المزمور ':'')+verses('ar',c,v,ps) }); return s });
+    }
+    const MALE_A=/^(Лука|Сава|Никита|Фома|Тома|Јона|Кузма|Јуда|Акила|Варнава|Сила|Илија|Јеремија|Еремија|Исаија|Захарија|Софонија|Авдија|Неемија|Матија|Варахија|Михеја|Јосија|Езекија|Анания|Агапија|Никола|Ѓорѓија|Андреја|Матеја|Зосима|Мина|Пимена|Онисифора|Ахила)$/;
+    const sv=(cap,nx)=>{ const w=(nx||'').replace(/[^А-Шa-шЀ-ӿ]/g,''); const fem=/[аa]$/.test(w)&&!MALE_A.test(w.replace(/^./,c=>c.toUpperCase())); return (cap?'С':'с')+(fem?'вета':'вети') };
+    function mkRoman(t){
+      // "во IV век" -> "во четвртиот век"; "IV–V век" -> "четвртиот и петтиот век"; "Лав I" -> "Лав Први"
+      t=t.replace(/(^|[\s(])(во|на|од|до|по|за|кон|околу|пред|после|меѓу|почетокот на|крајот на|средината на)\s([IVXL]+)(?:\s*[-–]\s*([IVXL]+))?(?=\s+(?:век|вселенски|собор))/g,(a,p,pre,r1,r2)=>{const o=x=>{const n=rom(x);return ORD_MK[n]?ORD_MK[n]+'от':x}; return `${p}${pre} ${o(r1)}${r2?' и '+o(r2):''}`});
+      t=t.replace(/(^|[\s(])([IVXL]+)(?:\s*[-–]\s*([IVXL]+))?(?=\s+(?:век|вселенски|собор))/g,(a,p,r1,r2)=>{const o=x=>ORD_MK[rom(x)]||x; return `${p}${o(r1)}${r2?' и '+o(r2):''}`});
+      t=t.replace(/([А-ШЃЌЉЊЏЅЈ][а-шѓќљњџѕј]+)\s([IVX]{1,5})(?![A-Za-z])/g,(a,nm,r)=>{const o=ORD_MK[rom(r)]; return o?nm+' '+o.charAt(0).toUpperCase()+o.slice(1):a});
+      return t;
+    }
+    function enRoman(t){
+      t=t.replace(/\b([IVX]{1,5})(?:\s*[-–]\s*([IVX]{1,5}))?(?=\s+centur)/g,(a,r1,r2)=>{const o=x=>(ORD_EN[rom(x)]||x).toLowerCase(); return o(r1)+(r2?' and '+o(r2):'')});
+      t=t.replace(/\b(Book|Part|Chapter|Volume|Canon)\s([IVX]{1,5})\b/g,(a,w,r)=>w+' '+rom(r));
+      // Leo III, Justin II, Theodosius I (only before a pause for the single "I", which is otherwise the pronoun)
+      t=t.replace(/\b([A-Z][a-z]{2,})\s((?:[IVX]{2,5})|V|X)(?![A-Za-z])/g,(a,nm,r)=>{const o=ORD_EN[rom(r)]; return o&&!/^(Book|Part|Chapter|Volume|Canon)$/.test(nm)?nm+' the '+o:a});
+      t=t.replace(/\b([A-Z][a-z]{2,})\sI(?=\s*[(,;)]|'s\b)/g,(a,nm)=>/^(Then|And|But|So|Lord|Yes|Now|Here|There|Today|What|Where|Truly|Behold|Therefore|For|If|When|As|That|Which|Whom|Father|Brothers|Sir|Master|Teacher|God|Jesus|Christ)$/.test(nm)?a:nm+' the First');
+      return t;
+    }
+    function go(t,L){
+      t=String(t||'');
+      if(!t) return t;
+      t=t.replace(/https?:\/\/\S+/g,'');
+      // words in another script: an English voice spells Cyrillic/Arabic letter by letter, so leave them out
+      if(L==='en') t=t.replace(/\(\s*[^()A-Za-z]*[\u0400-\u04FF\u0600-\u06FF][^()]*\)/g,'').replace(/[„“"«]?[\u0400-\u04FF\u0600-\u06FF][\u0400-\u04FF\u0600-\u06FF\u064B-\u0652\-]*[“”"»]?/g,'');
+      else t=t.replace(/\(\s*[A-Za-z][A-Za-z .,'’\-]*\)/g,'');
+      // "(+1096)" = died
+      t=t.replace(/\(\s*\+\s*(\d)/g,(a,d)=>'('+(L==='en'?'died ':L==='mk'?'починал ':'توفّي ')+d).replace(/(^|[\s(;,„“"])\++\s*/g,'$1');
+      t=refs(t,L);
+      // any "16:10" left (book named earlier in the sentence) -> chapter 16, verse 10
+      if(L!=='mk'){ const w=W[L]; t=t.replace(/\b[Cc]h\.\s?(?=\d+:\d)/g,'').replace(/(\d+)\s?:\s?(\d+)(?:\s*[-–]\s*(?:(\d+)\s?:\s?)?(\d+))?/g,(a,c,v,c2,v2)=>
+        `${w.c} ${c}${w.cm}${v2?w.vs:w.v} ${v}${v2?' '+w.to+' '+(c2?w.c+' '+c2+w.cm+w.v+' ':'')+v2:''}`).replace(/(\d)\s*[–-]\s*(?=chapter|الإصحاح)/g,'$1 '+w.to+' ') }
+      if(L==='en') t=t.replace(/\bPss?\.?\s(?=\d)/g,'Psalm ');
+      if(L==='en'){
+        t=t.replace(/\bSts?\.?(?=\s+[A-Z])/g,m=>/^Sts/.test(m)?'Saints':'Saint').replace(/\bSs\.(?=\s+[A-Z])/g,'Saints')
+           .replace(/\bVen\.\s/g,'Venerable ').replace(/\bFr\.\s(?=[A-Z])/g,'Father ').replace(/\bAbp\.\s/g,'Archbishop ').replace(/\bBp\.\s/g,'Bishop ').replace(/\bMt\.?\s(?=[A-Z][a-z])/g,'Mount ')
+           .replace(/\bd\.\s(?=(?:about|c\.|ca\.|in\s)?\s*\d)/g,'died ').replace(/\bb\.\s(?=(?:about\s)?\d)/g,'born ').replace(/\b(?:c|ca|circa)\.\s?(?=\d)/g,'about ').replace(/\bfl\.\s(?=\d)/g,'flourished ')
+           .replace(/\be\.g\.,?/g,'for example,').replace(/\bi\.e\.,?/g,'that is,').replace(/\bcf\.\s/g,'compare ').replace(/\betc\./g,'et cetera.').replace(/\bvv\.\s(?=\d)/g,'verses ').replace(/\bv\.\s(?=\d)/g,'verse ').replace(/\bch\.\s(?=\d)/g,'chapter ')
+           .replace(/\b(\d{1,4})\s?A\.D\.(?=\s+[A-Z]|\s*$)/g,'$1 AD.').replace(/\b(\d{1,4})\s?A\.D\./g,'$1 AD').replace(/\b(\d{1,4})\s?B\.C\.(?=\s+[A-Z]|\s*$)/g,'$1 BC.').replace(/\b(\d{1,4})\s?B\.C\./g,'$1 BC');
+        t=enRoman(t);
+      } else if(L==='mk'){
+        t=t.replace(/(^|[\s(„“])(С|с)вв\.\s?/g,(a,p,c)=>p+(c==='С'?'Светите ':'светите ')).replace(/(^|[\s(„“])(С|с)в\.\s?(\S*)/g,(a,p,c,nx)=>p+sv(c==='С',nx)+' '+nx)
+           .replace(/(?<![\u0400-\u04FF])поч\.\s?/g,'починал ').replace(/(^|\s)сп\.\s/g,'$1спореди ').replace(/(^|\s)гл\.\s(?=\d)/g,'$1глава ').replace(/(^|\s)ст\.\s(?=\d)/g,'$1стих ').replace(/(^|\s)стр\.\s(?=\d)/g,'$1страница ')
+           .replace(/(^|\s)итн\./g,'$1и така натаму.').replace(/(^|\s)т\.е\.,?/g,'$1тоа е,').replace(/(^|\s)т\.н\.\s/g,'$1таканаречен ').replace(/(^|\s)(?:околу|ок\.)\s?(?=\d)/g,'$1околу ')
+           .replace(/(\d)\s?г\.(?=\s|$)/g,'$1 година').replace(/(\d)\s?в\.(?=\s|$)/g,'$1 век').replace(/(^|\s)пр\.\s?Хр\./g,'$1пред Христа').replace(/(^|\s)н\.\s?е\./g,'$1од нашата ера');
+        t=mkRoman(t);
+      } else {
+        t=t.replace(/(\d)\s?ق\.\s?م\.?/g,'$1 قبل الميلاد').replace(/(\d)\s?م(?=[\s).,،؛]|$)/g,'$1 للميلاد').replace(/(\d)\s?هـ(?=[\s).,،؛]|$)/g,'$1 للهجرة');
+      }
+      const w=W[L];
+      // 482–565 -> 482 to 565;  1754/1759 -> 1754 or 1759;  Wednesday/Friday -> Wednesday or Friday
+      t=t.replace(/(\d)\s*[–-]\s*(\d)/g,`$1 ${w.to} $2`).replace(/(\d)\s*\/\s*(\d)/g,`$1 ${w.or} $2`)
+         .replace(/([A-Za-z\u0400-\u04FF\u0600-\u06FF])\/([A-Za-z\u0400-\u04FF\u0600-\u06FF])/g,`$1 ${w.or} $2`);
+      // brackets and parentheses: a short pause instead of silence-less run-on;  [Translation of the relics of] -> plain words
+      const cm=L==='ar'?'،':',';
+      t=t.replace(/[\[\]]/g,'').replace(/\s*\(\s*([^()]*?)\s*\)/g,(a,x)=>x?`${cm} ${x}${cm}`:'');
+      t=t.replace(/[“”„"«»]/g,'').replace(/\s+[–—]\s+/g,cm+' ').replace(/\s*·\s*/g,cm+' ').replace(/\s*\/\s*/g,' ').replace(/\s*&\s*/g,L==='en'?' and ':L==='mk'?' и ':' و ')
+         .replace(/\s+([,،;؛:.!?…])/g,'$1').replace(/([,،])(?:\s*[,،])+/g,'$1').replace(/[,،]\s*([:;؛])/g,'$1').replace(/([!?؟…])\s*\./g,'$1').replace(/([,،;؛:])\s*(?=[.!?…؟]|$)/g,'').replace(/([.!?…؟:;؛])\s*[,،]/g,'$1').replace(/^\s*[,،]\s*/,'')
+         .replace(/\s+/g,' ').trim();
+      return t;
+    }
+    return go;
+  })();
+  function chunks(t,L){
+    t=clean(SAY(t,L==='mk'?'mk':'en')); if(!t) return [];
     let s=t.split(/(?<=[.!?…])\s+/), out=[];
     for(const p of s){ if(out.length&&ABBR.test(out[out.length-1])) out[out.length-1]+=' '+p; else out.push(p) }
     const fin=[];
@@ -506,7 +636,7 @@ const TTS=(function(){
     return fin;
   }
   function build(d,sc,L){
-    const q=[], E=L==='en', u=T[L], add=(k,t,hdr)=>chunks(t).forEach(c=>q.push({k:L+':'+k,t:c,L,d:d.date}));
+    const q=[], E=L==='en', u=T[L], add=(k,t,hdr)=>chunks(t,L).forEach(c=>q.push({k:L+':'+k,t:c,L,d:d.date}));
     const saints=()=>{ add('it0',u.saints+'.'); d.items.forEach((it,i)=>add('it'+i,(E?it.en:it.mk)+'.')) };
     const lives=()=>{ if(!d.saints.length) return; add('s0n',u.lives+'.');
       d.saints.forEach((s,i)=>{ add(s.kind==='P'?'s'+i+'n':'s'+i+'p0',(E?s.name_en:s.name_mk)+'.');
@@ -524,7 +654,7 @@ const TTS=(function(){
     return q;
   }
   function buildPrayers(d,sc,L){
-    const q=[], langs=L==='both'?['en','mk']:[L], add=(Lx,k,t)=>chunks(t).forEach(c=>q.push({k:Lx+':'+k,t:c,L:Lx,d:'prayers'}));
+    const q=[], langs=L==='both'?['en','mk']:[L], add=(Lx,k,t)=>chunks(t,Lx).forEach(c=>q.push({k:Lx+':'+k,t:c,L:Lx,d:'prayers'}));
     const sp=t=>String(t||'').replace(/~(R\.|Одг\.)~\s*/g,'').replace(/~/g,'').replace(/\s+[NН]\.:/g,':');
     const dot=t=>/[.!?:…]$/.test(t)?t:t+'.';
     d.sections.forEach((s,si)=>{ if(sc!=='all'&&sc!==s.id) return;
@@ -549,19 +679,31 @@ const TTS=(function(){
     const r=el.getBoundingClientRect(), top=$('#top').offsetHeight, bot=window.innerHeight-$('#ttsBar').offsetHeight;
     if(r.top<top||r.top>bot-40) window.scrollTo({top:window.scrollY+r.top-top-20,behavior:'smooth'});
   }
+  /* Natural flow: consecutive sentences of the same paragraph are spoken as ONE utterance (up to ~600 characters,
+     always cut at a sentence end), so there is no gap and no intonation reset between sentences. Voices that stream
+     from the network (Chrome's "Google ..." voices) stop after ~15 s, so they keep short pieces. Word-boundary events
+     move the counter on sentence by sentence, so pause/resume restarts at the current sentence, not the paragraph. */
+  function group(i,v){
+    const it=st.q[i], lim=v&&v.localService===false?220:600, g=[i]; let n=it.t.length;
+    for(let j=i+1;j<st.q.length;j++){ const x=st.q[j]; if(x.k!==it.k||x.L!==it.L||x.d!==it.d||n+1+x.t.length>lim) break; g.push(j); n+=1+x.t.length }
+    return g;
+  }
   function speakNext(){
     const my=st.token;
     if(st.i>=st.q.length){ stop(true); return }
     const it=st.q[st.i], v=it.L==='en'?voiceFor('en'):voiceFor('mk');
     if(it.L==='mk'&&!v){ st.i++; return speakNext() }   // no usable Cyrillic voice: skip MK text (note is shown)
     const base=v?vl(v).split('-')[0]:'en';
-    const u=new SpeechSynthesisUtterance(it.L==='mk'?translit(it.t,base):it.t);
+    const g=group(st.i,v), last=g[g.length-1], tx=t=>it.L==='mk'?translit(t,base):t, parts=g.map(j=>tx(st.q[j].t)), offs=[]; let o=0;
+    parts.forEach(p=>{ offs.push(o); o+=p.length+1 });
+    const u=new SpeechSynthesisUtterance(parts.join(' ')); st.u=u;   // keep a reference: Chrome drops events of collected utterances
     if(v){u.voice=v;u.lang=v.lang} else u.lang=it.L==='en'?'en-AU':'mk-MK';
     u.rate=rate; u.pitch=1;
-    u.onend=()=>{ if(my!==st.token) return; st.i++; speakNext() };
-    u.onerror=e=>{ if(my!==st.token) return; if(e&&(e.error==='interrupted'||e.error==='canceled')) return; st.i++; speakNext() };
+    u.onboundary=e=>{ if(my!==st.token||!e||typeof e.charIndex!=='number') return; let j=0; while(j+1<offs.length&&e.charIndex>=offs[j+1]) j++; if(st.i!==g[j]){ st.i=g[j]; status() } };
+    u.onend=()=>{ if(my!==st.token) return; st.i=last+1; speakNext() };
+    u.onerror=e=>{ if(my!==st.token) return; if(e&&(e.error==='interrupted'||e.error==='canceled')) return; st.i=last+1; speakNext() };
     highlight(it); status();
-    try{ S.speak(u) }catch(e){ st.i++; setTimeout(speakNext,0) }
+    try{ S.speak(u) }catch(e){ st.i=last+1; setTimeout(speakNext,0) }
   }
   function status(){
     const u=ui(); $('#ttsPlay').textContent=st.playing&&!st.paused?'❚❚':'▶'; $('#ttsPlay').setAttribute('aria-label',st.playing&&!st.paused?'Pause':'Play');
@@ -635,7 +777,7 @@ const TTS=(function(){
     start();
   }
   function refreshDay(){ if(st.playing&&!st.paused) highlight(st.q[st.i]); status() }
-  return {ok,init,labels,_awake:Awake,fromDay,refreshDay,_state:st,_build:build,_buildPrayers:buildPrayers,_heading:heading,_chunks:chunks,_note:note,_voiceFor:voiceFor,_listFor:listFor,_vq:vq,_tip:tip};
+  return {ok,init,labels,_awake:Awake,fromDay,refreshDay,_state:st,_build:build,_buildPrayers:buildPrayers,_heading:heading,_chunks:chunks,_say:SAY,_group:group,_note:note,_voiceFor:voiceFor,_listFor:listFor,_vq:vq,_tip:tip};
 })();
 window.MPC_TTS=TTS;
 
