@@ -880,7 +880,7 @@ function init(){
     if(mm){ const t=view==='day'?+cur.slice(5,7):mm; if(bibleOpen||prayersOpen||view!=='month'||mvM!==t) showMonth(t,{noHash:t===mm}); return }
     if(valid(h)){ if(view!=='day'||prayersOpen||bibleOpen||h!==cur) show(h); return }
     if(!h) showMonth(+cur.slice(5,7),{noHash:true}) });
-  $('#foot').innerHTML='<p class="copy">Copyright © 2026 ZB</p><p>Sources: mpc.org.mk (calendar) · m-p-c.org (Macedonian Bible) · standard Orthodox lectionary (holytrinityorthodox.com) for weekday readings · day icons from Wikimedia Commons (public domain / free licences, credited under each icon). Works offline. No tracking.</p>';
+  $('#foot').innerHTML='<p class="copy">Copyright © 2026 ZB</p><p>Sources: mpc.org.mk (calendar) · m-p-c.org (Macedonian Bible) · official MPC calendar app “Православен календар” (Monastery Eleusa, Veljusa) for weekday readings · day icons from Wikimedia Commons (public domain / free licences, credited under each icon). Works offline. No tracking.</p>';
   // On launch the app opens on the current month; deep links (#YYYY-MM-DD, #YYYY-MM, #prayers, #bible, #biblija) still work.
   const h=location.hash.slice(1); cur=todayInRange(); updateNav();
   if(valid(h)) show(h); else { showMonth(vmonth(h)||+cur.slice(5,7)); if(h==='prayers') openPrayers(false); else if(h==='bible'||h==='biblija') openBible(h,false) }
