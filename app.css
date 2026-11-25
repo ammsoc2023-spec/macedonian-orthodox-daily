@@ -115,7 +115,8 @@ mark{background:var(--hl);color:inherit}
 #ttsBar .tr[hidden]{display:none}
 
 .apptitle{display:flex;flex-direction:column;align-items:center;line-height:1.2;padding:6px 8px 2px;text-align:center}
-.apptitle strong{font-size:1.05rem;letter-spacing:.02em}
+.apptitle strong{font-size:1.05rem;letter-spacing:.02em;white-space:nowrap}
+footer .copy{text-align:center;margin:0 0 .7em}
 .apptitle span{font-size:.72rem;opacity:.8;font-style:italic}
 .credit{text-align:center;opacity:.8;font-style:italic;margin-top:10px}
 
